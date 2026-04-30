@@ -37,8 +37,8 @@
         /* LIVE MONITORING */
         .status-container { background: white; padding: 25px; border-radius: 20px; margin-bottom: 30px; border-left: 8px solid #dcf5b8; }
         .status-container h3 { color: #555; margin-bottom: 15px; font-size: 16px; }
-        .live-indicator { display: inline-flex; align-items: center; gap: 10px; font-weight: bold; font-size: 18px; padding: 12px 24px; background: #f0f0f0; border-radius: 12px; width: 100%; justify-content: center; }
-        .active-sort { background: #ffd166; color: #856404; animation: pulse 1.5s infinite; }
+        .live-indicator { display: inline-flex; align-items: center; gap: 10px; font-weight: bold; font-size: 18px; padding: 12px 24px; background: #f0f0f0; border-radius: 12px; width: 100%; justify-content: center; transition: 0.3s; }
+        .active-sort { animation: pulse 1.5s infinite; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
@@ -125,28 +125,67 @@
             measurementId: "G-P88X8D33M0"
         };
 
-        // Inisialisasi Firebase (Gunakan cara Versi 8 agar tidak error di browser)
+        // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Fungsi Update Status Real-time
+        console.log("Sistem Web Monitoring Aktif. Menghubungkan ke Firebase...");
+
+        // Fungsi Update Status Real-time dengan Deteksi Kata Kunci
         db.ref('/sistem/status_aktif').on('value', (snapshot) => {
             const status = snapshot.val();
+            console.log("Data masuk dari ESP32:", status); // Debugging di Inspect Element
+            
             const el = document.getElementById('status-live');
+            
             if (status) {
                 el.innerText = status;
-                if (status !== "Standby" && status !== "Menunggu Sampah...") {
+                let statusText = status.toLowerCase(); // Ubah ke huruf kecil semua agar mudah dideteksi
+
+                if (statusText.includes("logam")) {
+                    el.style.backgroundColor = "#ffd166"; // Kuning Logam
+                    el.style.color = "#856404";
                     el.classList.add('active-sort');
-                } else {
+                } 
+                else if (statusText.includes("plastik")) {
+                    el.style.backgroundColor = "#4db8ff"; // Biru Plastik
+                    el.style.color = "#004085";
+                    el.classList.add('active-sort');
+                }
+                else if (statusText.includes("organik")) {
+                    el.style.backgroundColor = "#2ecc71"; // Hijau Organik
+                    el.style.color = "#155724";
+                    el.classList.add('active-sort');
+                }
+                else if (statusText === "standby" || statusText === "menunggu sampah...") {
+                    el.style.backgroundColor = "#f0f0f0"; // Abu-abu Standby
+                    el.style.color = "#333";
                     el.classList.remove('active-sort');
+                } 
+                else {
+                    // Warna default jika ada status lain yang tidak dikenali
+                    el.style.backgroundColor = "#dcf5b8"; 
+                    el.style.color = "#272a27";
+                    el.classList.add('active-sort');
                 }
             }
         });
 
-        // Fungsi Update Total Counter
-        db.ref('/sensor_induktif/total').on('value', (s) => document.getElementById('total-logam').innerHTML = `${s.val() || 0} <span class="unit">item</span>`);
-        db.ref('/sensor_plastik/total').on('value', (s) => document.getElementById('total-plastik').innerHTML = `${s.val() || 0} <span class="unit">item</span>`);
-        db.ref('/sensor_organik/total').on('value', (s) => document.getElementById('total-organik').innerHTML = `${s.val() || 0} <span class="unit">item</span>`);
+        // Fungsi Update Total Counter dengan Logging
+        db.ref('/sensor_induktif/total').on('value', (s) => {
+            console.log("Total Logam Terbaca:", s.val());
+            document.getElementById('total-logam').innerHTML = `${s.val() || 0} <span class="unit">item</span>`;
+        });
+        
+        db.ref('/sensor_plastik/total').on('value', (s) => {
+            console.log("Total Plastik Terbaca:", s.val());
+            document.getElementById('total-plastik').innerHTML = `${s.val() || 0} <span class="unit">item</span>`;
+        });
+        
+        db.ref('/sensor_organik/total').on('value', (s) => {
+            console.log("Total Organik Terbaca:", s.val());
+            document.getElementById('total-organik').innerHTML = `${s.val() || 0} <span class="unit">item</span>`;
+        });
     </script>
 </body>
 </html>
