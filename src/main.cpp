@@ -33,25 +33,35 @@ void setup() {
   config.host = FIREBASE_HOST;
   config.signer.tokens.legacy_token = FIREBASE_AUTH;
   Firebase.begin(&config, &auth);
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
+  // --- TAMBAHKAN BARIS INI UNTUK MENCEGAH TIMEOUT ---
+  fbdo.setBSSLBufferSize(1024, 1024); // Memperbesar ukuran memori untuk keamanan SSL
+  Firebase.setReadTimeout(fbdo, 1000 * 60); // Memberi waktu tunggu lebih lama (60 detik)
+  Firebase.setwriteSizeLimit(fbdo, "tiny"); // Mengecilkan paket data agar cepat terkirim
   Firebase.reconnectWiFi(true);
 }
 
 void loop() {
   int bacaSensor = digitalRead(PIN_INDUKTIF);
-  
-  // Karena NPN, LOW = Logam Terdeteksi
-  String statusLogam = (bacaSensor == LOW) ? "Logam Terdeteksi" : "Tidak Ada Logam";
+  Serial.print("RAW INDUKTIF = ");
+  Serial.println(bacaSensor);
 
-  // Kirim ke Firebase di folder /sensor_induktif
+  // Karena NPN, LOW = Logam Terdeteksi
+  // Teks harus disesuaikan agar web bisa mengenalinya
+  String statusLive = (bacaSensor == LOW) ? "Logam Terdeteksi!" : "Menunggu Sampah...";
+
+  // Kirim ke Firebase di folder /sistem/status_aktif (Kamar yang benar!)
   if (Firebase.ready()) {
-    if (Firebase.setString(fbdo, "/sensor_induktif/status", statusLogam)) {
+    if (Firebase.setString(fbdo, "/sistem/status_aktif", statusLive)) {
       Serial.print("Update Firebase: ");
-      Serial.println(statusLogam);
+      Serial.println(statusLive);
     } else {
       Serial.print("Gagal kirim: ");
       Serial.println(fbdo.errorReason());
     }
   }
 
-  delay(1000); // Kirim data setiap 1 detik
+  delay(300); // Kirim data setiap 1 detik
 }
