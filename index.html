@@ -2,11 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta tag ini wajib ada agar HP tahu cara mengatur skala layar -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITK Smart Waste Monitoring</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- TAMBAHAN: Library Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <style>
         /* ================= DEKORASI DASAR ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
@@ -19,6 +20,8 @@
         .nav-menu { list-style: none; }
         .nav-item { padding: 15px; border-radius: 12px; cursor: pointer; color: #a0a5a0; margin-bottom: 5px; transition: 0.3s; }
         .nav-item.active { background-color: #dcf5b8; color: #272a27; font-weight: 600; }
+        .nav-item.logout-btn { color: #ff6b6b; margin-top: auto; border: 1px solid #ff6b6b; text-align: center; } /* Gaya tombol logout sidebar */
+        .nav-item.logout-btn:hover { background-color: #ff6b6b; color: white; }
         
         /* ================= KONTEN UTAMA ================= */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
@@ -44,31 +47,36 @@
 
         /* ================= RESPONSIVE (MOBILE) ================= */
         @media (max-width: 768px) {
-            body { flex-direction: column; } /* Sidebar pindah ke atas */
+            body { flex-direction: column; } 
             
             .sidebar { width: 100%; padding: 20px; height: auto; }
             .brand { margin-bottom: 0; text-align: center; }
-            .nav-menu { display: none; } /* Sembunyikan menu di mobile agar ringkas */
+            .nav-menu { display: none; } 
             
             .main-content { padding: 20px; }
             
             .header h2 { font-size: 20px; width: 100%; text-align: center; }
-            .user-tag { width: 100%; text-align: center; }
+            .user-tag { width: 100%; text-align: center; display: flex; flex-direction: column; gap: 10px; }
             
-            .summary-grid { grid-template-columns: 1fr; } /* Kartu jadi menumpuk ke bawah */
+            .summary-grid { grid-template-columns: 1fr; } 
             
             .card h2 { font-size: 22px; }
         }
+
+        .btn-logout-mobile { display: none; background-color: #ff6b6b; color: white; border: none; padding: 5px 15px; border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        @media (max-width: 768px) { .btn-logout-mobile { display: inline-block; } }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
         <div class="brand">ITK <span>SmartWaste</span></div>
-        <ul class="nav-menu">
+        <ul class="nav-menu" style="height: 100%; display: flex; flex-direction: column;">
             <li class="nav-item active">Dashboard</li>
             <li class="nav-item">Statistik</li>
             <li class="nav-item">Sistem</li>
+            <!-- Tombol Logout Sidebar -->
+            <li class="nav-item logout-btn" onclick="logoutDashboard()">Keluar (Logout)</li>
         </ul>
     </aside>
 
@@ -77,6 +85,8 @@
             <h2>Monitoring Sistem Pemilah</h2>
             <div class="user-tag" style="background: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; color: #666; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <strong>Sami Philip</strong> | ITK Balikpapan
+                <!-- Tombol Logout Khusus Layar HP -->
+                <button class="btn-logout-mobile" onclick="logoutDashboard()">Logout</button>
             </div>
         </div>
 
@@ -113,7 +123,7 @@
     </main>
 
     <script>
-        // Gunakan konfigurasi lengkap yang baru kamu ambil dari Firebase
+        // Konfigurasi Lengkap Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es",
             authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
@@ -126,44 +136,63 @@
         };
 
         // Inisialisasi Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // ================= PENJAGA PINTU (AUTHENTICATION) =================
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                // Jika tidak ada user yang login, tendang ke halaman login
+                window.location.replace("login.html");
+            } else {
+                console.log("User terverifikasi:", user.email);
+            }
+        });
 
+        // Fungsi Logout
+        function logoutDashboard() {
+            firebase.auth().signOut().then(() => {
+                window.location.replace("login.html");
+            }).catch((error) => {
+                alert("Gagal logout: " + error.message);
+            });
+        }
+        // =================================================================
+
+        const db = firebase.database();
         console.log("Sistem Web Monitoring Aktif. Menghubungkan ke Firebase...");
 
-        // Fungsi Update Status Real-time dengan Deteksi Kata Kunci
+        // Fungsi Update Status Real-time
         db.ref('/sistem/status_aktif').on('value', (snapshot) => {
             const status = snapshot.val();
-            console.log("Data masuk dari ESP32:", status); // Debugging di Inspect Element
-            
             const el = document.getElementById('status-live');
             
             if (status) {
                 el.innerText = status;
-                let statusText = status.toLowerCase(); // Ubah ke huruf kecil semua agar mudah dideteksi
+                let statusText = status.toLowerCase(); 
 
                 if (statusText.includes("logam")) {
-                    el.style.backgroundColor = "#ffd166"; // Kuning Logam
+                    el.style.backgroundColor = "#ffd166"; 
                     el.style.color = "#856404";
                     el.classList.add('active-sort');
                 } 
                 else if (statusText.includes("plastik")) {
-                    el.style.backgroundColor = "#4db8ff"; // Biru Plastik
+                    el.style.backgroundColor = "#4db8ff"; 
                     el.style.color = "#004085";
                     el.classList.add('active-sort');
                 }
                 else if (statusText.includes("organik")) {
-                    el.style.backgroundColor = "#2ecc71"; // Hijau Organik
+                    el.style.backgroundColor = "#2ecc71"; 
                     el.style.color = "#155724";
                     el.classList.add('active-sort');
                 }
                 else if (statusText === "standby" || statusText === "menunggu sampah...") {
-                    el.style.backgroundColor = "#f0f0f0"; // Abu-abu Standby
+                    el.style.backgroundColor = "#f0f0f0"; 
                     el.style.color = "#333";
                     el.classList.remove('active-sort');
                 } 
                 else {
-                    // Warna default jika ada status lain yang tidak dikenali
                     el.style.backgroundColor = "#dcf5b8"; 
                     el.style.color = "#272a27";
                     el.classList.add('active-sort');
@@ -171,19 +200,16 @@
             }
         });
 
-        // Fungsi Update Total Counter dengan Logging
+        // Fungsi Update Total Counter
         db.ref('/sensor_induktif/total').on('value', (s) => {
-            console.log("Total Logam Terbaca:", s.val());
             document.getElementById('total-logam').innerHTML = `${s.val() || 0} <span class="unit">item</span>`;
         });
         
         db.ref('/sensor_plastik/total').on('value', (s) => {
-            console.log("Total Plastik Terbaca:", s.val());
             document.getElementById('total-plastik').innerHTML = `${s.val() || 0} <span class="unit">item</span>`;
         });
         
         db.ref('/sensor_organik/total').on('value', (s) => {
-            console.log("Total Organik Terbaca:", s.val());
             document.getElementById('total-organik').innerHTML = `${s.val() || 0} <span class="unit">item</span>`;
         });
     </script>
