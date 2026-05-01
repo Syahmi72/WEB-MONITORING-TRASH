@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Smart Trash Can</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f7faeb; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 350px; text-align: center; }
+        .login-container h2 { margin-bottom: 5px; color: #272a27; }
+        .login-container p { color: #888; font-size: 14px; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background-color: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background-color: #27ae60; }
+        #error-msg { color: #ff6b6b; font-size: 13px; display: none; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Admin Login</h2>
+        <p>Sistem Pemilah Sampah ITK</p>
+        <input type="email" id="email" placeholder="Masukkan Email" required>
+        <input type="password" id="password" placeholder="Masukkan Password" required>
+        <button onclick="login()">Masuk Dashboard</button>
+        <p id="error-msg">Email atau Password salah!</p>
+    </div>
+
+    <!-- Script Firebase versi 8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // === PASTE FIREBASE CONFIG KAMU DI SINI ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es", // Contoh, ganti dengan milikmu
+            authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
+            projectId: "monitoring-tempat-sampah-c7e1a",
+            storageBucket: "monitoring-tempat-sampah-c7e1a.firebasestorage.app",
+            messagingSenderId: "41746176408",
+            appId: "1:41746176408:web:f34430ca0c6a322f2433ed"
+        };
+        
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Login sukses! Lempar ke dashboard utama
+                    window.location.href = "index.html";
+                })
+                .catch((error) => {
+                    // Login gagal
+                    errorMsg.style.display = "block";
+                    errorMsg.innerText = "Gagal login. Cek kembali email & password Anda.";
+                    console.error(error);
+                });
+        }
+    </script>
+</body>
+</html>
