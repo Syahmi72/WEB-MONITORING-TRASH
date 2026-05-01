@@ -144,7 +144,7 @@
         firebase.auth().onAuthStateChanged((user) => {
             if (!user) {
                 // Jika tidak ada user yang login, tendang ke halaman login
-                window.location.replace("login.html");
+                window.location.replace("/login.html");
             } else {
                 console.log("User terverifikasi:", user.email);
             }
@@ -153,7 +153,7 @@
         // Fungsi Logout
         function logoutDashboard() {
             firebase.auth().signOut().then(() => {
-                window.location.replace("login.html");
+                window.location.replace("/login.html");
             }).catch((error) => {
                 alert("Gagal logout: " + error.message);
             });
