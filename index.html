@@ -3,121 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITK Smart Waste - Premium Dashboard</title>
-    <!-- Library Firebase & Chart.js -->
+    <title>ITK Smart Waste - Liquid Dashboard</title>
+    <!-- Library Firebase, Chart.js & Leaflet (Peta) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet CSS & JS untuk Peta -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         /* ================= DEKORASI DASAR & FULL DARK THEME ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         
-        /* Anti Overscroll Putih di HP */
-        html { background-color: #101210; }
+        html { background-color: #0a0c0a; }
 
         body { 
-            background-color: #101210;
-            background: radial-gradient(circle at top left, #2b332b 0%, #101210 100%);
-            background-attachment: fixed; /* Mencegah background terpotong saat scroll */
-            background-size: cover;
+            background-color: #0a0c0a;
+            background: radial-gradient(circle at top left, #1a221a 0%, #0a0c0a 100%);
+            background-attachment: fixed;
             color: #ffffff; 
             min-height: 100vh; 
             overflow-x: hidden;
-            opacity: 0; /* Tirai Keamanan */
+            opacity: 0;
             transition: opacity 0.5s ease-in-out;
+            position: relative;
         }
 
-        /* Custom Scrollbar biar elegan */
+        /* Ambient Orbs untuk Efek "Liquid" */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 0;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .orb-1 { top: 10%; left: 20%; width: 300px; height: 300px; background: rgba(204, 255, 0, 0.08); }
+        .orb-2 { bottom: 10%; right: 10%; width: 400px; height: 400px; background: rgba(77, 184, 255, 0.05); animation-delay: -5s; }
+
+        @keyframes float { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(30px) scale(1.1); } }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         ::-webkit-scrollbar-thumb { background: #ccff00; border-radius: 10px; }
 
-        /* ================= LAYOUT UTAMA (FLEXBOX) ================= */
-        .app-layout { display: flex; min-height: 100vh; width: 100%; }
+        .app-layout { display: flex; min-height: 100vh; width: 100%; position: relative; z-index: 1; }
         
         /* ================= SLIDE BAR (SIDEBAR) ================= */
         .sidebar {
             width: 280px;
-            background: rgba(16, 18, 16, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(10, 12, 10, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border-right: 1px solid rgba(255, 255, 255, 0.05);
             padding: 30px 20px;
             display: flex;
             flex-direction: column;
             z-index: 100;
             transition: left 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         }
         
         .logo { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; margin-bottom: 40px; justify-content: center;}
         .logo span { color: #ccff00; } 
 
-        /* Mini Profile di Sidebar */
         .sidebar-profile { text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .sidebar-profile img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #ccff00; object-fit: cover; margin-bottom: 10px; }
         .sidebar-profile h3 { font-size: 16px; font-weight: 600; color: #fff; }
         .sidebar-profile p { font-size: 12px; color: #ccff00; }
 
-        /* Navigasi Menu */
         .nav-links { list-style: none; display: flex; flex-direction: column; gap: 10px; flex: 1; }
         .nav-item { padding: 15px 20px; border-radius: 15px; cursor: pointer; color: #888; font-weight: 500; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
         .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .nav-item.active { background: rgba(204, 255, 0, 0.1); color: #ccff00; border-left: 4px solid #ccff00; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(204,255,0,0.15) 0%, rgba(204,255,0,0) 100%); color: #ccff00; border-left: 4px solid #ccff00; }
         
         .btn-logout { margin-top: auto; background: transparent; color: #ff4757; border: 1px solid #ff4757; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: 600; transition: 0.3s; width: 100%; }
         .btn-logout:hover { background: #ff4757; color: white; box-shadow: 0 0 15px rgba(255,71,87,0.4); }
 
-        /* ================= AREA KONTEN ================= */
         .main-content { flex: 1; padding: 40px 50px; height: 100vh; overflow-y: auto; }
         
-        /* Mobile Topbar (Header khusus HP) */
-        .mobile-topbar { display: none; background: rgba(16, 18, 16, 0.8); backdrop-filter: blur(15px); padding: 15px 25px; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 90; }
+        .mobile-topbar { display: none; background: rgba(10, 12, 10, 0.8); backdrop-filter: blur(15px); padding: 15px 25px; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 90; }
         .hamburger-btn { background: none; border: none; color: #ccff00; font-size: 28px; cursor: pointer; }
 
-        /* Sembunyikan/Tampilkan Section (SPA Logic) */
         .content-section { display: none; animation: fadeIn 0.4s ease; }
         .content-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ================= KOMPONEN UI ================= */
-        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 25px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
-        .hero-title { font-size: 38px; font-weight: 300; line-height: 1.2; margin-bottom: 30px; letter-spacing: 1px; }
-        .hero-title strong { font-weight: 700; color: #ccff00; }
+        /* ================= LIQUID GLASSMORPHISM ================= */
+        .liquid-glass { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(25px); 
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.12); 
+            border-radius: 24px; 
+            padding: 25px; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255,255,255,0.05);
+            transition: transform 0.3s;
+        }
+        .liquid-glass:hover { transform: translateY(-3px); }
 
-        /* Grid Status Cards */
+        .hero-title { font-size: 38px; font-weight: 300; line-height: 1.2; margin-bottom: 30px; letter-spacing: 1px; }
+        .hero-title strong { font-weight: 700; color: #ccff00; text-shadow: 0 0 20px rgba(204,255,0,0.3); }
+
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
         .stat-card { display: flex; align-items: center; gap: 20px; }
-        .circle-wrap { width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; }
-        .circle-inner { width: 56px; height: 56px; background: #1a1c1a; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 700; z-index: 2; }
+        .circle-wrap { width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .circle-inner { width: 56px; height: 56px; background: #121412; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 700; z-index: 2; }
         
-        .circle-wrap.logam { background: conic-gradient(#ccff00 0%, rgba(255,255,255,0.1) 0%); } 
-        .circle-wrap.plastik { background: conic-gradient(#4db8ff 0%, rgba(255,255,255,0.1) 0%); }
-        .circle-wrap.organik { background: conic-gradient(#2ecc71 0%, rgba(255,255,255,0.1) 0%); }
+        .circle-wrap.logam { background: conic-gradient(#ccff00 0%, rgba(255,255,255,0.05) 0%); } 
+        .circle-wrap.plastik { background: conic-gradient(#4db8ff 0%, rgba(255,255,255,0.05) 0%); }
+        .circle-wrap.organik { background: conic-gradient(#2ecc71 0%, rgba(255,255,255,0.05) 0%); }
 
-        /* Form Input (Settings) */
+        /* Filter Dark Mode Untuk Peta Leaflet */
+        .dark-map-tiles {
+            filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+        }
+
         .form-group { margin-bottom: 20px; }
         .form-label { display: block; font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 500; }
         .form-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 15px; border-radius: 12px; font-size: 14px; outline: none; transition: 0.3s; }
-        .form-input:focus { border-color: #ccff00; background: rgba(204,255,0,0.02); }
-        .btn-primary { background: #ccff00; color: #101210; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; font-size: 15px; }
+        .form-input:focus { border-color: #ccff00; background: rgba(204,255,0,0.05); }
+        .btn-primary { background: #ccff00; color: #0a0c0a; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; font-size: 15px; }
         .btn-primary:hover { box-shadow: 0 0 20px rgba(204,255,0,0.4); transform: translateY(-2px); }
 
-        /* ================= RESPONSIVE (HP & LAPTOP) ================= */
         @media (max-width: 900px) {
             .app-layout { flex-direction: column; }
             .mobile-topbar { display: flex; }
-            
-            /* Pastikan background main content tetap gelap walau di scroll habis */
             .main-content { padding: 20px; height: auto; min-height: calc(100vh - 70px); overflow-y: visible; background-color: transparent; }
-            
-            /* Sidebar HP: Disembunyikan di luar layar (Slide Bar) */
-            .sidebar { position: fixed; left: -100%; top: 0; bottom: 0; width: 280px; background: rgba(16, 18, 16, 0.95); box-shadow: none; }
-            /* Saat tombol hamburger diklik */
+            .sidebar { position: fixed; left: -100%; top: 0; bottom: 0; width: 280px; background: rgba(10, 12, 10, 0.95); box-shadow: none; }
             .sidebar.show { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.7); }
-            
             .hero-title { font-size: 28px; text-align: center; }
             .stat-grid { grid-template-columns: 1fr; }
         }
@@ -125,64 +143,58 @@
 </head>
 <body>
 
-    <!-- TOPBAR MOBILE (Hanya Muncul di HP) -->
+    <!-- Ambient Orbs -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
     <div class="mobile-topbar">
         <div class="logo" style="margin-bottom: 0; font-size: 18px;">ITK <span>WASTE</span></div>
         <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
     </div>
 
     <div class="app-layout">
-        
-        <!-- SLIDE BAR KIRI -->
         <aside class="sidebar" id="sidebar">
             <div class="logo">ITK <span>SMARTWASTE</span></div>
-            
-            <!-- Foto & Nama Sidebar -->
             <div class="sidebar-profile">
                 <img id="sidebar-foto" src="https://via.placeholder.com/80?text=User" alt="Profile">
                 <h3 id="sidebar-nama">Admin</h3>
                 <p>Status: Online ✅</p>
             </div>
-
             <ul class="nav-links">
                 <li class="nav-item active" onclick="pindahTab('dashboard', this)">❖ Dashboard</li>
                 <li class="nav-item" onclick="pindahTab('statistik', this)">📈 Statistik Chart</li>
                 <li class="nav-item" onclick="pindahTab('settings', this)">⚙️ Settings Akun</li>
             </ul>
-            
             <button class="btn-logout" onclick="logoutDashboard()">Keluar (Logout)</button>
         </aside>
 
-        <!-- KONTEN KANAN -->
         <main class="main-content" onclick="tutupSidebarMobile()">
             
-            <!-- ================= TAB 1: DASHBOARD ================= -->
+            <!-- TAB 1: DASHBOARD -->
             <section id="tab-dashboard" class="content-section active">
                 <h1 class="hero-title">Live <strong>Monitoring</strong></h1>
                 
-                <!-- Status Sensor -->
-                <div class="glass-panel" style="margin-bottom: 30px; text-align: center;">
+                <div class="liquid-glass" style="margin-bottom: 30px; text-align: center;">
                     <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Sensor Pendeteksi Aktif</p>
                     <h2 id="status-live" style="color: #fff; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2);">Menunggu Sampah...</h2>
                 </div>
 
-                <!-- Kartu Bawah -->
                 <div class="stat-grid">
-                    <div class="glass-panel stat-card">
+                    <div class="liquid-glass stat-card">
                         <div class="circle-wrap logam" id="circle-logam"><div class="circle-inner" id="val-logam">0</div></div>
                         <div>
                             <h3 style="color: #ccff00;">Logam</h3>
                             <p style="font-size: 12px; color: #888;">Sensor Induktif</p>
                         </div>
                     </div>
-                    <div class="glass-panel stat-card">
+                    <div class="liquid-glass stat-card">
                         <div class="circle-wrap plastik" id="circle-plastik"><div class="circle-inner" id="val-plastik">0</div></div>
                         <div>
                             <h3 style="color: #4db8ff;">Plastik</h3>
                             <p style="font-size: 12px; color: #888;">Kapasitif Default</p>
                         </div>
                     </div>
-                    <div class="glass-panel stat-card">
+                    <div class="liquid-glass stat-card">
                         <div class="circle-wrap organik" id="circle-organik"><div class="circle-inner" id="val-organik">0</div></div>
                         <div>
                             <h3 style="color: #2ecc71;">Organik</h3>
@@ -190,40 +202,42 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- PETA LIVE LOCATION -->
+                <div class="liquid-glass" style="margin-bottom: 30px;">
+                    <h3 style="color: #ccff00; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between;">
+                        <span>📍 GPS Live Tracker</span>
+                        <span style="font-size: 12px; color: #888; font-weight: 400;">Koneksi: <span id="map-status" style="color: #2ecc71;">Terhubung</span></span>
+                    </h3>
+                    <div id="map" style="height: 350px; border-radius: 15px; z-index: 1;"></div>
+                </div>
             </section>
 
-            <!-- ================= TAB 2: STATISTIK ================= -->
+            <!-- TAB 2: STATISTIK -->
             <section id="tab-statistik" class="content-section">
                 <h1 class="hero-title">Data <strong>Statistik</strong></h1>
-                <div class="glass-panel" style="height: 400px; padding-top: 40px;">
+                <div class="liquid-glass" style="height: 400px; padding-top: 40px;">
                     <canvas id="grafikSampah"></canvas>
                 </div>
             </section>
 
-            <!-- ================= TAB 3: SETTINGS ================= -->
+            <!-- TAB 3: SETTINGS -->
             <section id="tab-settings" class="content-section">
-                <div class="glass-panel" style="max-width: 600px; margin: 0 auto;">
-                    <h2 style="margin-bottom: 30px; color: #ccff00; text-align: center;">Pengaturan Profil & Keamanan</h2>
-                    
-                    <!-- Form Ubah Foto -->
+                <div class="liquid-glass" style="max-width: 600px; margin: 0 auto;">
+                    <h2 style="margin-bottom: 30px; color: #ccff00; text-align: center;">Profil & Keamanan</h2>
                     <div style="text-align: center; margin-bottom: 40px;">
-                        <div style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid #ccff00; margin: 0 auto 15px; overflow: hidden; position: relative;">
+                        <div style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid #ccff00; margin: 0 auto 15px; overflow: hidden; position: relative; box-shadow: 0 0 20px rgba(204,255,0,0.3);">
                             <img id="preview-foto" src="https://via.placeholder.com/120" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
-                        <label for="input-foto" style="cursor: pointer; background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; font-size: 12px; transition: 0.3s; color: #ccff00;">Ganti Foto Profile</label>
+                        <label for="input-foto" style="cursor: pointer; background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; font-size: 12px; transition: 0.3s; color: #ccff00; border: 1px solid rgba(204,255,0,0.3);">Ganti Foto Profile</label>
                         <input type="file" id="input-foto" accept="image/*" style="display: none;" onchange="gantiFotoProfil(event)">
                     </div>
-
-                    <!-- Form Nama -->
                     <div class="form-group">
                         <label class="form-label">Nama Tampilan Dashboard</label>
                         <input type="text" id="input-nama" class="form-input" placeholder="Masukkan nama baru">
                     </div>
                     <button class="btn-primary" onclick="simpanNamaDanFoto()" style="margin-bottom: 40px;">Simpan Profil Saja</button>
-                    
                     <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 40px;">
-
-                    <!-- Form Password -->
                     <h3 style="font-size: 16px; margin-bottom: 20px; color: #ff4757;">Keamanan Akun</h3>
                     <div class="form-group">
                         <label class="form-label">Ubah Password Login</label>
@@ -238,7 +252,6 @@
 
     <!-- SCRIPT LOGIKA PROGRAM -->
     <script>
-        // === 1. KONFIGURASI FIREBASE ===
         const firebaseConfig = {
             apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es",
             authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
@@ -251,23 +264,16 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
         const auth = firebase.auth();
-
-        // Variabel penampung foto sementara
         let base64FotoBaru = null;
 
-        // === 2. PENJAGA PINTU & AMBIL DATA PROFIL ===
         auth.onAuthStateChanged((user) => {
             if (!user) {
                 window.location.replace("/login.html");
             } else {
-                document.body.style.opacity = "1"; // Buka tirai web
-                
-                // Set Nama
+                document.body.style.opacity = "1";
                 const nama = user.displayName || "Admin";
                 document.getElementById('sidebar-nama').innerText = nama;
                 document.getElementById('input-nama').value = nama;
-
-                // Ambil Foto Profil dari Database Realtime
                 db.ref('users_profile/' + user.uid + '/foto').once('value').then((snapshot) => {
                     if(snapshot.exists()) {
                         const foto = snapshot.val();
@@ -275,39 +281,36 @@
                         document.getElementById('preview-foto').src = foto;
                     }
                 });
+                
+                // Inisialisasi peta setelah web tampil
+                setTimeout(initMap, 500);
             }
         });
 
-        // Logout
-        function logoutDashboard() {
-            auth.signOut().then(() => { window.location.replace("/login.html"); });
-        }
+        function logoutDashboard() { auth.signOut().then(() => { window.location.replace("/login.html"); }); }
 
-        // === 3. LOGIKA UI (PINDAH TAB & HAMBURGER HP) ===
         function pindahTab(namaTab, elemenNav) {
-            // Ubah Tab Konten
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.getElementById('tab-' + namaTab).classList.add('active');
-            
-            // Ubah Warna Menu Kiri
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             elemenNav.classList.add('active');
-
-            // Khusus HP: Tutup otomatis menu kiri saat tab dipilih
             tutupSidebarMobile();
+            
+            // Fix bug peta mengecil saat pindah tab
+            if(namaTab === 'dashboard' && map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
         }
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
         function tutupSidebarMobile() { if(window.innerWidth <= 900) { document.getElementById('sidebar').classList.remove('show'); } }
 
-        // === 4. LOGIKA SETTINGS (UPDATE PROFIL & PASSWORD) ===
         function gantiFotoProfil(event) {
             const file = event.target.files[0];
             if(!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 base64FotoBaru = e.target.result;
-                // Preview sementara di layar
                 document.getElementById('preview-foto').src = base64FotoBaru;
             };
             reader.readAsDataURL(file);
@@ -316,14 +319,9 @@
         function simpanNamaDanFoto() {
             const user = auth.currentUser;
             const namaBaru = document.getElementById('input-nama').value;
-            
             if(!user) return;
-            
-            // Update Nama di Auth
             user.updateProfile({ displayName: namaBaru }).then(() => {
                 document.getElementById('sidebar-nama').innerText = namaBaru;
-                
-                // Jika user juga mengubah foto, simpan ke Database
                 if(base64FotoBaru) {
                     db.ref('users_profile/' + user.uid).set({ foto: base64FotoBaru }).then(() => {
                         document.getElementById('sidebar-foto').src = base64FotoBaru;
@@ -338,40 +336,25 @@
         function gantiPassword() {
             const passBaru = document.getElementById('input-password').value;
             const user = auth.currentUser;
-            
             if(passBaru.length < 6) return alert("Password minimal 6 karakter!");
-            
             user.updatePassword(passBaru).then(() => {
                 alert("Berhasil! Password terganti. Silakan login kembali dengan password baru.");
-                logoutDashboard(); // Wajib login ulang demi keamanan
+                logoutDashboard();
             }).catch(error => {
-                if(error.code === 'auth/requires-recent-login') {
-                    alert("KEAMANAN: Anda perlu logout dan login ulang sebelum bisa mengubah password!");
-                } else {
-                    alert("Gagal: " + error.message);
-                }
+                if(error.code === 'auth/requires-recent-login') alert("KEAMANAN: Anda perlu logout dan login ulang sebelum bisa mengubah password!");
+                else alert("Gagal: " + error.message);
             });
         }
 
-        // === 5. GRAFIK & DATABASE REALTIME ===
         Chart.defaults.color = '#888';
         Chart.defaults.font.family = "'Poppins', sans-serif";
         const ctx = document.getElementById('grafikSampah').getContext('2d');
         let chartSampah = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: ['Logam', 'Plastik', 'Organik'],
-                datasets: [{
-                    label: 'Volume Terkumpul',
-                    data: [0, 0, 0],
-                    backgroundColor: ['#ccff00', '#4db8ff', '#2ecc71'],
-                    borderRadius: 10
-                }]
-            },
+            data: { labels: ['Logam', 'Plastik', 'Organik'], datasets: [{ label: 'Volume Terkumpul', data: [0, 0, 0], backgroundColor: ['#ccff00', '#4db8ff', '#2ecc71'], borderRadius: 10 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
-        // Sensor Live Status
         db.ref('/sistem/status_aktif').on('value', (s) => {
             const st = s.val();
             const el = document.getElementById('status-live');
@@ -385,7 +368,6 @@
             }
         });
 
-        // Counter & Grafik Live Update
         function updateUI(id, val, index, color) {
             let percentage = (val / 50) * 100; if(percentage > 100) percentage = 100;
             document.getElementById('circle-'+id).style.background = `conic-gradient(${color} ${percentage}%, rgba(255,255,255,0.05) 0%)`;
@@ -397,6 +379,45 @@
         db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, '#ccff00'));
         db.ref('/sensor_plastik/total').on('value', s => updateUI('plastik', s.val()||0, 1, '#4db8ff'));
         db.ref('/sensor_organik/total').on('value', s => updateUI('organik', s.val()||0, 2, '#2ecc71'));
+
+        // ================= SISTEM PETA REAL-TIME (LEAFLET) =================
+        let map;
+        let mapMarker;
+
+        function initMap() {
+            // Default Lokasi: Institut Teknologi Kalimantan (ITK) Balikpapan
+            const defaultLokasi = [-1.149, 116.899]; 
+
+            map = L.map('map').setView(defaultLokasi, 16);
+
+            // Layer Peta OpenStreetMap dengan filter Dark Mode
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                className: 'dark-map-tiles'
+            }).addTo(map);
+
+            // Membuat Ikon Kustom agar senada dengan warna Neon
+            const customIcon = L.divIcon({
+                className: 'custom-pin',
+                html: `<div style="background-color: #ccff00; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 15px #ccff00; border: 3px solid #101210;"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            mapMarker = L.marker(defaultLokasi, {icon: customIcon}).addTo(map);
+            mapMarker.bindPopup("<b style='color:black;'>Alat SmartWaste</b><br>Lokasi Area ITK").openPopup();
+
+            // Mendengarkan perubahan lokasi dari ESP32 via Firebase
+            // (Agar ini berfungsi, ESP32 harus mengirim data ke '/sistem/lokasi/lat' dan '/sistem/lokasi/lng')
+            db.ref('/sistem/lokasi').on('value', (snapshot) => {
+                const lokasi = snapshot.val();
+                if (lokasi && lokasi.lat && lokasi.lng) {
+                    const newLatLng = [lokasi.lat, lokasi.lng];
+                    mapMarker.setLatLng(newLatLng);
+                    map.flyTo(newLatLng, 17, { animate: true, duration: 1.5 });
+                }
+            });
+        }
     </script>
 </body>
 </html>
