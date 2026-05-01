@@ -26,14 +26,13 @@
         <p id="error-msg">Email atau Password salah!</p>
     </div>
 
-    <!-- Script Firebase versi 8 -->
+    <!-- Script Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script>
-        // === PASTE FIREBASE CONFIG KAMU DI SINI ===
         const firebaseConfig = {
-            apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es", // Contoh, ganti dengan milikmu
+            apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es",
             authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
             projectId: "monitoring-tempat-sampah-c7e1a",
             storageBucket: "monitoring-tempat-sampah-c7e1a.firebasestorage.app",
@@ -41,10 +40,17 @@
             appId: "1:41746176408:web:f34430ca0c6a322f2433ed"
         };
         
-        // Inisialisasi Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
+
+        // PENJAGA PINTU HALAMAN LOGIN
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Kalau sudah login sebelumnya, auto-lempar ke dashboard
+                window.location.replace("/index.html");
+            }
+        });
 
         function login() {
             const email = document.getElementById('email').value;
@@ -53,14 +59,11 @@
 
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    // Login sukses! Lempar ke dashboard utama
                     window.location.href = "/index.html";
                 })
                 .catch((error) => {
-                    // Login gagal
                     errorMsg.style.display = "block";
                     errorMsg.innerText = "Gagal login. Cek kembali email & password Anda.";
-                    console.error(error);
                 });
         }
     </script>
