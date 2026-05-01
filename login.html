@@ -11,15 +11,19 @@
         /* ================= DEKORASI DASAR ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         
+        /* Tambahan warna dasar gelap untuk mencegah pantulan putih saat di-scroll di HP */
+        html { background-color: #101210; } 
+
         body { 
             background: radial-gradient(circle at top left, #2b332b 0%, #101210 100%);
+            background-color: #101210;
             background-attachment: fixed;
             color: #ffffff; 
             min-height: 100vh; 
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 20px; /* Jarak bingkai (Hanya berlaku untuk Laptop) */
         }
 
         /* ================= BUNGKUSAN LOGIN (SPLIT SCREEN) ================= */
@@ -134,11 +138,21 @@
             text-align: center;
         }
 
-        /* ================= RESPONSIVE (HP) ================= */
+        /* ================= RESPONSIVE (KHUSUS HP) ================= */
         @media (max-width: 768px) {
-            .login-container { flex-direction: column; min-height: auto; }
+            /* Hapus jarak tepi dan buat rata atas di HP */
+            body { padding: 0; align-items: flex-start; } 
+            
+            .login-container { 
+                flex-direction: column; 
+                min-height: 100vh; /* Pastikan tinggi menyentuh ujung layar */
+                width: 100%; 
+                border-radius: 0; /* Hapus lengkungan sudut */
+                border: none; /* Hapus garis tepi putih */
+                box-shadow: none;
+            }
             .login-left { padding: 40px 20px; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-            .login-right { padding: 40px 25px; }
+            .login-right { padding: 40px 25px; flex: 1; justify-content: center; }
             .glowing-orb { width: 200px; height: 200px; }
         }
     </style>
@@ -163,7 +177,6 @@
             <h2>Welcome Back</h2>
             <p>Silakan masuk ke panel kontrol admin.</p>
 
-            <!-- Menggunakan tag form agar bisa tekan Enter -->
             <form onsubmit="event.preventDefault(); prosesLogin();">
                 <div class="form-group">
                     <label class="form-label">Email Admin</label>
@@ -186,7 +199,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script>
-        // === PASTE FIREBASE CONFIG KAMU DI SINI ===
         const firebaseConfig = {
             apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es", 
             authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
@@ -196,17 +208,14 @@
             appId: "1:41746176408:web:f34430ca0c6a322f2433ed"
         };
         
-        // Inisialisasi Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
 
         const auth = firebase.auth();
 
-        // PENJAGA PINTU HALAMAN LOGIN
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // Kalau sudah login sebelumnya, auto-lempar ke dashboard
                 window.location.replace("/index.html");
             }
         });
@@ -217,17 +226,14 @@
             const errorMsg = document.getElementById('error-msg');
             const btnSubmit = document.getElementById('btn-submit');
 
-            // Ubah teks tombol saat loading
             btnSubmit.innerText = "Memverifikasi...";
             btnSubmit.style.opacity = "0.7";
 
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    // Sukses!
                     window.location.href = "/index.html";
                 })
                 .catch((error) => {
-                    // Gagal
                     btnSubmit.innerText = "Login ke Dashboard";
                     btnSubmit.style.opacity = "1";
                     
