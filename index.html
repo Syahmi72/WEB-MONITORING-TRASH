@@ -15,7 +15,11 @@
         /* ================= DEKORASI DASAR & FULL DARK THEME ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         
+        /* Anti Overscroll Putih di HP */
+        html { background-color: #101210; }
+
         body { 
+            background-color: #101210;
             background: radial-gradient(circle at top left, #2b332b 0%, #101210 100%);
             background-attachment: fixed; /* Mencegah background terpotong saat scroll */
             background-size: cover;
@@ -105,7 +109,9 @@
         @media (max-width: 900px) {
             .app-layout { flex-direction: column; }
             .mobile-topbar { display: flex; }
-            .main-content { padding: 20px; height: auto; overflow-y: visible; }
+            
+            /* Pastikan background main content tetap gelap walau di scroll habis */
+            .main-content { padding: 20px; height: auto; min-height: calc(100vh - 70px); overflow-y: visible; background-color: transparent; }
             
             /* Sidebar HP: Disembunyikan di luar layar (Slide Bar) */
             .sidebar { position: fixed; left: -100%; top: 0; bottom: 0; width: 280px; background: rgba(16, 18, 16, 0.95); box-shadow: none; }
@@ -246,7 +252,7 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        // Variabel penampung foto smentara
+        // Variabel penampung foto sementara
         let base64FotoBaru = null;
 
         // === 2. PENJAGA PINTU & AMBIL DATA PROFIL ===
@@ -339,7 +345,6 @@
                 alert("Berhasil! Password terganti. Silakan login kembali dengan password baru.");
                 logoutDashboard(); // Wajib login ulang demi keamanan
             }).catch(error => {
-                // Biasanya error jika loginnya sudah terlalu lama (sesi kadaluarsa)
                 if(error.code === 'auth/requires-recent-login') {
                     alert("KEAMANAN: Anda perlu logout dan login ulang sebelum bisa mengubah password!");
                 } else {
