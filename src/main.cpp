@@ -3,8 +3,8 @@
 #include <FirebaseESP32.h>
 
 // === KONFIGURASI WIFI ===
-#define WIFI_SSID "Alizah"
-#define WIFI_PASSWORD "Tobalu04"
+#define WIFI_SSID "ITK-LAB2.X"
+#define WIFI_PASSWORD "K@mpusM3rdeka!"
 
 // === KONFIGURASI FIREBASE ===
 #define FIREBASE_HOST "monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app"
