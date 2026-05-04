@@ -3,421 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITK Smart Waste - Liquid Dashboard</title>
-    <!-- Library Firebase, Chart.js & Leaflet (Peta) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>ITK SmartWaste - Pemilah Sampah AI</title>
     
-    <!-- Leaflet CSS & JS untuk Peta -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <!-- Konfigurasi PWA (Aplikasi HP) -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#101210">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Library 3D Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
     <style>
-        /* ================= DEKORASI DASAR & FULL DARK THEME ================= */
+        /* ================= DEKORASI DASAR ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         
-        html { background-color: #0a0c0a; }
-
         body { 
+            margin: 0; 
+            overflow-x: hidden; 
             background-color: #0a0c0a;
-            background: radial-gradient(circle at top left, #1a221a 0%, #0a0c0a 100%);
-            background-attachment: fixed;
-            color: #ffffff; 
-            min-height: 100vh; 
-            overflow-x: hidden;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            position: relative;
+            color: #ffffff;
         }
 
-        /* Ambient Orbs untuk Efek "Liquid" */
-        .ambient-orb {
+        /* Container untuk Canvas 3D */
+        #canvas-container {
             position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             z-index: 0;
-            animation: float 10s infinite ease-in-out alternate;
         }
-        .orb-1 { top: 10%; left: 20%; width: 300px; height: 300px; background: rgba(204, 255, 0, 0.08); }
-        .orb-2 { bottom: 10%; right: 10%; width: 400px; height: 400px; background: rgba(77, 184, 255, 0.05); animation-delay: -5s; }
 
-        @keyframes float { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(30px) scale(1.1); } }
+        /* Overlay Gradasi agar teks mudah dibaca */
+        .overlay-gradient {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(90deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.4) 50%, rgba(10,12,10,0.1) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: #ccff00; border-radius: 10px; }
-
-        .app-layout { display: flex; min-height: 100vh; width: 100%; position: relative; z-index: 1; }
-        
-        /* ================= SLIDE BAR (SIDEBAR) ================= */
-        .sidebar {
-            width: 280px;
-            background: rgba(10, 12, 10, 0.4);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 30px 20px;
+        /* ================= UI LAYOUT ================= */
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            z-index: 100;
-            transition: left 0.3s ease;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-        }
-        
-        .logo { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; margin-bottom: 40px; justify-content: center;}
-        .logo span { color: #ccff00; } 
-
-        .sidebar-profile { text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .sidebar-profile img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #ccff00; object-fit: cover; margin-bottom: 10px; }
-        .sidebar-profile h3 { font-size: 16px; font-weight: 600; color: #fff; }
-        .sidebar-profile p { font-size: 12px; color: #ccff00; }
-
-        .nav-links { list-style: none; display: flex; flex-direction: column; gap: 10px; flex: 1; }
-        .nav-item { padding: 15px 20px; border-radius: 15px; cursor: pointer; color: #888; font-weight: 500; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .nav-item.active { background: linear-gradient(90deg, rgba(204,255,0,0.15) 0%, rgba(204,255,0,0) 100%); color: #ccff00; border-left: 4px solid #ccff00; }
-        
-        .btn-logout { margin-top: auto; background: transparent; color: #ff4757; border: 1px solid #ff4757; padding: 12px; border-radius: 15px; cursor: pointer; font-weight: 600; transition: 0.3s; width: 100%; }
-        .btn-logout:hover { background: #ff4757; color: white; box-shadow: 0 0 15px rgba(255,71,87,0.4); }
-
-        .main-content { flex: 1; padding: 40px 50px; height: 100vh; overflow-y: auto; }
-        
-        .mobile-topbar { display: none; background: rgba(10, 12, 10, 0.8); backdrop-filter: blur(15px); padding: 15px 25px; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 90; }
-        .hamburger-btn { background: none; border: none; color: #ccff00; font-size: 28px; cursor: pointer; }
-
-        .content-section { display: none; animation: fadeIn 0.4s ease; }
-        .content-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* ================= LIQUID GLASSMORPHISM ================= */
-        .liquid-glass { 
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(25px); 
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.12); 
-            border-radius: 24px; 
-            padding: 25px; 
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255,255,255,0.05);
-            transition: transform 0.3s;
-        }
-        .liquid-glass:hover { transform: translateY(-3px); }
-
-        .hero-title { font-size: 38px; font-weight: 300; line-height: 1.2; margin-bottom: 30px; letter-spacing: 1px; }
-        .hero-title strong { font-weight: 700; color: #ccff00; text-shadow: 0 0 20px rgba(204,255,0,0.3); }
-
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-card { display: flex; align-items: center; gap: 20px; }
-        .circle-wrap { width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        .circle-inner { width: 56px; height: 56px; background: #121412; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 700; z-index: 2; }
-        
-        .circle-wrap.logam { background: conic-gradient(#ccff00 0%, rgba(255,255,255,0.05) 0%); } 
-        .circle-wrap.plastik { background: conic-gradient(#4db8ff 0%, rgba(255,255,255,0.05) 0%); }
-        .circle-wrap.organik { background: conic-gradient(#2ecc71 0%, rgba(255,255,255,0.05) 0%); }
-
-        /* Filter Dark Mode Untuk Peta Leaflet */
-        .dark-map-tiles {
-            filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+            pointer-events: none;
         }
 
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 500; }
-        .form-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 15px; border-radius: 12px; font-size: 14px; outline: none; transition: 0.3s; }
-        .form-input:focus { border-color: #ccff00; background: rgba(204,255,0,0.05); }
-        .btn-primary { background: #ccff00; color: #0a0c0a; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; font-size: 15px; }
-        .btn-primary:hover { box-shadow: 0 0 20px rgba(204,255,0,0.4); transform: translateY(-2px); }
+        /* Header (Kiri Atas) */
+        header {
+            padding: 30px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
 
-        @media (max-width: 900px) {
-            .app-layout { flex-direction: column; }
-            .mobile-topbar { display: flex; }
-            .main-content { padding: 20px; height: auto; min-height: calc(100vh - 70px); overflow-y: visible; background-color: transparent; }
-            .sidebar { position: fixed; left: -100%; top: 0; bottom: 0; width: 280px; background: rgba(10, 12, 10, 0.95); box-shadow: none; }
-            .sidebar.show { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.7); }
-            .hero-title { font-size: 28px; text-align: center; }
-            .stat-grid { grid-template-columns: 1fr; }
+        .btn-login {
+            background: rgba(204, 255, 0, 0.1);
+            color: #ccff00;
+            border: 1px solid #ccff00;
+            padding: 10px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        .btn-login:hover {
+            background: #ccff00;
+            color: #0a0c0a;
+            box-shadow: 0 0 20px rgba(204, 255, 0, 0.5);
+        }
+
+        /* Konten Utama (Mengenal Alat) */
+        .content-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 50px;
+            pointer-events: none;
+        }
+
+        .info-box {
+            max-width: 500px;
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(-20px);
+            animation: slideIn 1s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+
+        .info-box h1 {
+            font-size: 36px;
+            font-weight: 300;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .info-box h1 strong { font-weight: 700; color: #ccff00; }
+        
+        .info-box p {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 3px solid #ccff00;
+        }
+        .feature-item h4 { font-size: 14px; color: #fff; margin-bottom: 3px; }
+        .feature-item span { font-size: 12px; color: #888; }
+
+        /* Interaksi Tip */
+        .interaction-tip {
+            position: absolute;
+            bottom: 40px;
+            right: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #ccff00;
+            font-size: 12px;
+            pointer-events: none;
+            animation: pulseText 2s infinite;
+        }
+        .mouse-icon { width: 24px; height: 36px; border: 2px solid #ccff00; border-radius: 15px; position: relative; }
+        .mouse-wheel { width: 4px; height: 8px; background: #ccff00; border-radius: 2px; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); animation: scrollMouse 1.5s infinite; }
+
+        @keyframes pulseText { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes scrollMouse { 0% { top: 6px; opacity: 1; } 100% { top: 18px; opacity: 0; } }
+
+        /* Responsive HP */
+        @media (max-width: 768px) {
+            header { padding: 20px; }
+            .overlay-gradient { background: linear-gradient(180deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.7) 40%, rgba(10,12,10,0.2) 100%); }
+            .content-wrap { padding: 0 20px; align-items: flex-start; margin-top: 20px; }
+            .info-box { padding: 25px; }
+            .info-box h1 { font-size: 28px; }
+            .interaction-tip { bottom: 20px; right: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Ambient Orbs -->
-    <div class="ambient-orb orb-1"></div>
-    <div class="ambient-orb orb-2"></div>
+    <!-- Container untuk 3D -->
+    <div id="canvas-container"></div>
+    <div class="overlay-gradient"></div>
 
-    <div class="mobile-topbar">
-        <div class="logo" style="margin-bottom: 0; font-size: 18px;">ITK <span>WASTE</span></div>
-        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
-    </div>
+    <!-- UI Layer -->
+    <div class="ui-layer">
+        
+        <!-- Header & Tombol Login Kiri Atas -->
+        <header>
+            <a href="login.html" class="btn-login">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                Masuk Dashboard
+            </a>
+            <div style="font-weight: 700; letter-spacing: 1px; color: #fff;">ITK <span style="color: #ccff00;">WASTE</span></div>
+        </header>
 
-    <div class="app-layout">
-        <aside class="sidebar" id="sidebar">
-            <div class="logo">ITK <span>SMARTWASTE</span></div>
-            <div class="sidebar-profile">
-                <img id="sidebar-foto" src="https://via.placeholder.com/80?text=User" alt="Profile">
-                <h3 id="sidebar-nama">Admin</h3>
-                <p>Status: Online ✅</p>
+        <!-- Penjelasan Alat -->
+        <div class="content-wrap">
+            <div class="info-box">
+                <h1>Masa Depan<br><strong>Pengelolaan Sampah</strong></h1>
+                <p>ITK SmartWaste adalah sistem cerdas berbasis IoT yang mampu mengenali dan memilah sampah secara otomatis ke dalam kategori yang tepat untuk menjaga lingkungan kampus tetap hijau.</p>
+                
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">⚙️</div>
+                        <div>
+                            <h4>Sensor Induktif Precision</h4>
+                            <span>Mendeteksi dan memilah material logam secara otomatis.</span>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">⚡</div>
+                        <div>
+                            <h4>Sensor Kapasitif Smart</h4>
+                            <span>Mengklasifikasikan sampah plastik dan organik basah.</span>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">📡</div>
+                        <div>
+                            <h4>Terhubung Real-Time</h4>
+                            <span>Pantau kapasitas sampah langsung melalui Dashboard awan.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <ul class="nav-links">
-                <li class="nav-item active" onclick="pindahTab('dashboard', this)">❖ Dashboard</li>
-                <li class="nav-item" onclick="pindahTab('statistik', this)">📈 Statistik Chart</li>
-                <li class="nav-item" onclick="pindahTab('settings', this)">⚙️ Settings Akun</li>
-            </ul>
-            <button class="btn-logout" onclick="logoutDashboard()">Keluar (Logout)</button>
-        </aside>
+        </div>
 
-        <main class="main-content" onclick="tutupSidebarMobile()">
-            
-            <!-- TAB 1: DASHBOARD -->
-            <section id="tab-dashboard" class="content-section active">
-                <h1 class="hero-title">Live <strong>Monitoring</strong></h1>
-                
-                <div class="liquid-glass" style="margin-bottom: 30px; text-align: center;">
-                    <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Sensor Pendeteksi Aktif</p>
-                    <h2 id="status-live" style="color: #fff; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2);">Menunggu Sampah...</h2>
-                </div>
-
-                <div class="stat-grid">
-                    <div class="liquid-glass stat-card">
-                        <div class="circle-wrap logam" id="circle-logam"><div class="circle-inner" id="val-logam">0</div></div>
-                        <div>
-                            <h3 style="color: #ccff00;">Logam</h3>
-                            <p style="font-size: 12px; color: #888;">Sensor Induktif</p>
-                        </div>
-                    </div>
-                    <div class="liquid-glass stat-card">
-                        <div class="circle-wrap plastik" id="circle-plastik"><div class="circle-inner" id="val-plastik">0</div></div>
-                        <div>
-                            <h3 style="color: #4db8ff;">Plastik</h3>
-                            <p style="font-size: 12px; color: #888;">Kapasitif Default</p>
-                        </div>
-                    </div>
-                    <div class="liquid-glass stat-card">
-                        <div class="circle-wrap organik" id="circle-organik"><div class="circle-inner" id="val-organik">0</div></div>
-                        <div>
-                            <h3 style="color: #2ecc71;">Organik</h3>
-                            <p style="font-size: 12px; color: #888;">Dapat Dikompos</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PETA LIVE LOCATION -->
-                <div class="liquid-glass" style="margin-bottom: 30px;">
-                    <h3 style="color: #ccff00; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between;">
-                        <span>📍 GPS Live Tracker</span>
-                        <span style="font-size: 12px; color: #888; font-weight: 400;">Koneksi: <span id="map-status" style="color: #2ecc71;">Terhubung</span></span>
-                    </h3>
-                    <div id="map" style="height: 350px; border-radius: 15px; z-index: 1;"></div>
-                </div>
-            </section>
-
-            <!-- TAB 2: STATISTIK -->
-            <section id="tab-statistik" class="content-section">
-                <h1 class="hero-title">Data <strong>Statistik</strong></h1>
-                <div class="liquid-glass" style="height: 400px; padding-top: 40px;">
-                    <canvas id="grafikSampah"></canvas>
-                </div>
-            </section>
-
-            <!-- TAB 3: SETTINGS -->
-            <section id="tab-settings" class="content-section">
-                <div class="liquid-glass" style="max-width: 600px; margin: 0 auto;">
-                    <h2 style="margin-bottom: 30px; color: #ccff00; text-align: center;">Profil & Keamanan</h2>
-                    <div style="text-align: center; margin-bottom: 40px;">
-                        <div style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid #ccff00; margin: 0 auto 15px; overflow: hidden; position: relative; box-shadow: 0 0 20px rgba(204,255,0,0.3);">
-                            <img id="preview-foto" src="https://via.placeholder.com/120" style="width: 100%; height: 100%; object-fit: cover;">
-                        </div>
-                        <label for="input-foto" style="cursor: pointer; background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 20px; font-size: 12px; transition: 0.3s; color: #ccff00; border: 1px solid rgba(204,255,0,0.3);">Ganti Foto Profile</label>
-                        <input type="file" id="input-foto" accept="image/*" style="display: none;" onchange="gantiFotoProfil(event)">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Tampilan Dashboard</label>
-                        <input type="text" id="input-nama" class="form-input" placeholder="Masukkan nama baru">
-                    </div>
-                    <button class="btn-primary" onclick="simpanNamaDanFoto()" style="margin-bottom: 40px;">Simpan Profil Saja</button>
-                    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 40px;">
-                    <h3 style="font-size: 16px; margin-bottom: 20px; color: #ff4757;">Keamanan Akun</h3>
-                    <div class="form-group">
-                        <label class="form-label">Ubah Password Login</label>
-                        <input type="password" id="input-password" class="form-input" placeholder="Ketik password baru (min. 6 karakter)">
-                    </div>
-                    <button class="btn-primary" onclick="gantiPassword()" style="background: transparent; color: #ff4757; border: 2px solid #ff4757;">Update Password Baru</button>
-                </div>
-            </section>
-
-        </main>
+        <div class="interaction-tip">
+            Tarik layar untuk memutar 3D
+            <div class="mouse-icon"><div class="mouse-wheel"></div></div>
+        </div>
     </div>
 
-    <!-- SCRIPT LOGIKA PROGRAM -->
+    <!-- Pendaftaran Service Worker PWA -->
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es",
-            authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
-            databaseURL: "https://monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "monitoring-tempat-sampah-c7e1a",
-            storageBucket: "monitoring-tempat-sampah-c7e1a.firebasestorage.app",
-            messagingSenderId: "41746176408",
-            appId: "1:41746176408:web:f34430ca0c6a322f2433ed"
-        };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.database();
-        const auth = firebase.auth();
-        let base64FotoBaru = null;
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('PWA Service Worker terdaftar!'))
+                .catch(err => console.log('PWA gagal terdaftar:', err));
+            });
+        }
+    </script>
 
-        auth.onAuthStateChanged((user) => {
-            if (!user) {
-                window.location.replace("/login.html");
-            } else {
-                document.body.style.opacity = "1";
-                const nama = user.displayName || "Admin";
-                document.getElementById('sidebar-nama').innerText = nama;
-                document.getElementById('input-nama').value = nama;
-                db.ref('users_profile/' + user.uid + '/foto').once('value').then((snapshot) => {
-                    if(snapshot.exists()) {
-                        const foto = snapshot.val();
-                        document.getElementById('sidebar-foto').src = foto;
-                        document.getElementById('preview-foto').src = foto;
-                    }
-                });
-                
-                // Inisialisasi peta setelah web tampil
-                setTimeout(initMap, 500);
-            }
+    <!-- SCRIPT 3D INTERAKTIF -->
+    <script>
+        // 1. Setup Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // 2. Setup OrbitControls (Untuk bisa diputar oleh User)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = false; // Matikan zoom agar tidak mengganggu scroll HP
+        controls.enablePan = false;
+        controls.autoRotate = true; // Objek berputar otomatis perlahan
+        controls.autoRotateSpeed = 1.5;
+
+        // 3. Membuat Objek 3D (Simulasi Smart Bin)
+        const smartBinGroup = new THREE.Group();
+
+        // Badan Utama (Besi Gelap)
+        const bodyGeo = new THREE.CylinderGeometry(2.5, 2.2, 7, 64);
+        const bodyMat = new THREE.MeshStandardMaterial({ 
+            color: 0x101210, 
+            metalness: 0.9, 
+            roughness: 0.2 
         });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        smartBinGroup.add(body);
 
-        function logoutDashboard() { auth.signOut().then(() => { window.location.replace("/login.html"); }); }
+        // Kerangka Wireframe Neon (Efek Hologram/Pemindai)
+        const wireMat = new THREE.MeshBasicMaterial({ 
+            color: 0xccff00, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.15 
+        });
+        const wireMesh = new THREE.Mesh(bodyGeo, wireMat);
+        wireMesh.scale.set(1.02, 1.02, 1.02); // Sedikit lebih besar dari badan asli
+        smartBinGroup.add(wireMesh);
 
-        function pindahTab(namaTab, elemenNav) {
-            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            document.getElementById('tab-' + namaTab).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            elemenNav.classList.add('active');
-            tutupSidebarMobile();
+        // Inti Cahaya di dalam Bin
+        const coreGeo = new THREE.CylinderGeometry(1.8, 1.8, 6.8, 32);
+        const coreMat = new THREE.MeshBasicMaterial({ 
+            color: 0xccff00, 
+            transparent: true, 
+            opacity: 0.1 
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        smartBinGroup.add(core);
+
+        // Cincin Neon di Bagian Atas
+        const ringGeo = new THREE.TorusGeometry(2.6, 0.05, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0xccff00 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.y = 3.5;
+        ring.rotation.x = Math.PI / 2;
+        smartBinGroup.add(ring);
+
+        // Posisikan ke agak kanan layar
+        if(window.innerWidth > 768) {
+            smartBinGroup.position.x = 4;
+        } else {
+            smartBinGroup.position.x = 0; // Ketengah jika di HP
+        }
+        scene.add(smartBinGroup);
+
+        // 4. Pencahayaan (Lighting)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xccff00, 2, 50);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        const backLight = new THREE.PointLight(0x4db8ff, 1, 50); // Cahaya biru dari belakang
+        backLight.position.set(-5, -5, -5);
+        scene.add(backLight);
+
+        camera.position.z = 12;
+        camera.position.y = 2;
+
+        // 5. Animasi Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Wajib dipanggil untuk autorotate & interaksi
             
-            // Fix bug peta mengecil saat pindah tab
-            if(namaTab === 'dashboard' && map) {
-                setTimeout(() => map.invalidateSize(), 100);
-            }
+            // Efek cincin naik turun
+            ring.position.y = 3.5 + Math.sin(Date.now() * 0.002) * 0.2;
+
+            renderer.render(scene, camera);
         }
+        animate();
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
-        function tutupSidebarMobile() { if(window.innerWidth <= 900) { document.getElementById('sidebar').classList.remove('show'); } }
-
-        function gantiFotoProfil(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                base64FotoBaru = e.target.result;
-                document.getElementById('preview-foto').src = base64FotoBaru;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function simpanNamaDanFoto() {
-            const user = auth.currentUser;
-            const namaBaru = document.getElementById('input-nama').value;
-            if(!user) return;
-            user.updateProfile({ displayName: namaBaru }).then(() => {
-                document.getElementById('sidebar-nama').innerText = namaBaru;
-                if(base64FotoBaru) {
-                    db.ref('users_profile/' + user.uid).set({ foto: base64FotoBaru }).then(() => {
-                        document.getElementById('sidebar-foto').src = base64FotoBaru;
-                        alert("Nama dan Foto Profil berhasil diperbarui!");
-                    });
-                } else {
-                    alert("Nama berhasil diperbarui!");
-                }
-            }).catch(error => alert("Gagal update profil: " + error.message));
-        }
-
-        function gantiPassword() {
-            const passBaru = document.getElementById('input-password').value;
-            const user = auth.currentUser;
-            if(passBaru.length < 6) return alert("Password minimal 6 karakter!");
-            user.updatePassword(passBaru).then(() => {
-                alert("Berhasil! Password terganti. Silakan login kembali dengan password baru.");
-                logoutDashboard();
-            }).catch(error => {
-                if(error.code === 'auth/requires-recent-login') alert("KEAMANAN: Anda perlu logout dan login ulang sebelum bisa mengubah password!");
-                else alert("Gagal: " + error.message);
-            });
-        }
-
-        Chart.defaults.color = '#888';
-        Chart.defaults.font.family = "'Poppins', sans-serif";
-        const ctx = document.getElementById('grafikSampah').getContext('2d');
-        let chartSampah = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: ['Logam', 'Plastik', 'Organik'], datasets: [{ label: 'Volume Terkumpul', data: [0, 0, 0], backgroundColor: ['#ccff00', '#4db8ff', '#2ecc71'], borderRadius: 10 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-        });
-
-        db.ref('/sistem/status_aktif').on('value', (s) => {
-            const st = s.val();
-            const el = document.getElementById('status-live');
-            if(st) {
-                el.innerText = st;
-                let text = st.toLowerCase();
-                if(text.includes('logam')) el.style.color = '#ccff00';
-                else if(text.includes('plastik')) el.style.color = '#4db8ff';
-                else if(text.includes('organik')) el.style.color = '#2ecc71';
-                else el.style.color = '#fff';
+        // 6. Penyesuaian saat layar di-resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            if(window.innerWidth > 768) {
+                smartBinGroup.position.x = 4;
+            } else {
+                smartBinGroup.position.x = 0;
             }
         });
-
-        function updateUI(id, val, index, color) {
-            let percentage = (val / 50) * 100; if(percentage > 100) percentage = 100;
-            document.getElementById('circle-'+id).style.background = `conic-gradient(${color} ${percentage}%, rgba(255,255,255,0.05) 0%)`;
-            document.getElementById('val-'+id).innerText = val;
-            chartSampah.data.datasets[0].data[index] = val;
-            chartSampah.update();
-        }
-
-        db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, '#ccff00'));
-        db.ref('/sensor_plastik/total').on('value', s => updateUI('plastik', s.val()||0, 1, '#4db8ff'));
-        db.ref('/sensor_organik/total').on('value', s => updateUI('organik', s.val()||0, 2, '#2ecc71'));
-
-        // ================= SISTEM PETA REAL-TIME (LEAFLET) =================
-        let map;
-        let mapMarker;
-
-        function initMap() {
-            // Default Lokasi: Institut Teknologi Kalimantan (ITK) Balikpapan
-            const defaultLokasi = [-1.149, 116.899]; 
-
-            map = L.map('map').setView(defaultLokasi, 16);
-
-            // Layer Peta OpenStreetMap dengan filter Dark Mode
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap',
-                className: 'dark-map-tiles'
-            }).addTo(map);
-
-            // Membuat Ikon Kustom agar senada dengan warna Neon
-            const customIcon = L.divIcon({
-                className: 'custom-pin',
-                html: `<div style="background-color: #ccff00; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 15px #ccff00; border: 3px solid #101210;"></div>`,
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-            });
-
-            mapMarker = L.marker(defaultLokasi, {icon: customIcon}).addTo(map);
-            mapMarker.bindPopup("<b style='color:black;'>Alat SmartWaste</b><br>Lokasi Area ITK").openPopup();
-
-            // Mendengarkan perubahan lokasi dari ESP32 via Firebase
-            // (Agar ini berfungsi, ESP32 harus mengirim data ke '/sistem/lokasi/lat' dan '/sistem/lokasi/lng')
-            db.ref('/sistem/lokasi').on('value', (snapshot) => {
-                const lokasi = snapshot.val();
-                if (lokasi && lokasi.lat && lokasi.lng) {
-                    const newLatLng = [lokasi.lat, lokasi.lng];
-                    mapMarker.setLatLng(newLatLng);
-                    map.flyTo(newLatLng, 17, { animate: true, duration: 1.5 });
-                }
-            });
-        }
     </script>
 </body>
 </html>
