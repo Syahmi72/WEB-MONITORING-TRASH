@@ -174,9 +174,15 @@
             <section id="tab-dashboard" class="content-section active">
                 <h1 class="hero-title">Live <strong>Monitoring</strong></h1>
                 
-                <div class="liquid-glass" style="margin-bottom: 30px; text-align: center;">
-                    <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Sensor Pendeteksi Aktif</p>
-                    <h2 id="status-live" style="color: #fff; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2);">Menunggu Sampah...</h2>
+                <div class="liquid-glass" style="margin-bottom: 30px; text-align: center; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
+                    <div>
+                        <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Sensor Pemilah</p>
+                        <h2 id="status-live" style="color: #fff; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2);">Menunggu Sampah...</h2>
+                    </div>
+                    <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 30px;">
+                        <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Kapasitas Tong (IR)</p>
+                        <h2 id="status-ir" style="color: #2ecc71; font-size: 24px;">✅ Aman</h2>
+                    </div>
                 </div>
 
                 <div class="stat-grid">
@@ -365,6 +371,21 @@
                 else if(text.includes('plastik')) el.style.color = '#4db8ff';
                 else if(text.includes('organik')) el.style.color = '#2ecc71';
                 else el.style.color = '#fff';
+            }
+        });
+
+        // Sensor IR (Kapasitas Penuh)
+        db.ref('/sistem/status_kapasitas').on('value', (s) => {
+            const statusKapasitas = s.val();
+            const elIR = document.getElementById('status-ir');
+            if(statusKapasitas === 'Penuh') {
+                elIR.innerHTML = "⚠️ Penuh!";
+                elIR.style.color = "#ff4757"; // Merah bahaya
+                elIR.style.textShadow = "0 0 15px rgba(255,71,87,0.5)";
+            } else {
+                elIR.innerHTML = "✅ Aman";
+                elIR.style.color = "#2ecc71"; // Hijau aman
+                elIR.style.textShadow = "none";
             }
         });
 

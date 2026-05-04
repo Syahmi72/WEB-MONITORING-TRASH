@@ -13,6 +13,7 @@
 // === PIN SENSOR ===
 #define PIN_INDUKTIF 4    // GPIO 4 untuk sensor induktif
 #define PIN_KAPASITIF 19  // GPIO 19 untuk sensor kapasitif
+#define PIN_IR 22
 
 // === VARIABEL GLOBAL ===
 FirebaseData fbdo;
@@ -39,6 +40,7 @@ void setup() {
   // Karena sensor NPN NC (Kapasitif) butuh tarikan ke atas saat memutus arus (lampu mati)
   pinMode(PIN_INDUKTIF, INPUT_PULLUP);
   pinMode(PIN_KAPASITIF, INPUT_PULLUP); 
+  pinMode(PIN_IR, INPUT);
   
   pinMode(2, OUTPUT); // LED built-in ESP32
   digitalWrite(2, LOW);
@@ -82,6 +84,7 @@ void loop() {
   // Baca kedua sensor
   int bacaSensorInduktif = digitalRead(PIN_INDUKTIF);
   int bacaSensorKapasitif = digitalRead(PIN_KAPASITIF);
+  int irStatus = digitalRead(PIN_IR);
 
   // LOGIKA FINAL (DISILANG SESUAI SIFAT FISIK SENSOR)
   // Induktif (NO): Deteksi = LOW, Standby = HIGH
@@ -119,6 +122,15 @@ void loop() {
   } else if (!adaPlastik) {
     plastikTerlihat = false;
   }
+
+  if (irStatus == LOW) {
+    Firebase.setString(fbdo, "/sistem/status_kapasitas", "Penuh");
+  } else {
+    Firebase.setString(fbdo, "/sistem/status_kapasitas", "Aman");
+  }
+  
+  delay(500); // Jeda agar Firebase tidak ter-spam
+
 
   // === UPDATE STATUS WEB ===
   String statusLive = "Menunggu Sampah...";
