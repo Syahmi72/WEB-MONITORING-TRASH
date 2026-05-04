@@ -123,13 +123,33 @@ void loop() {
     plastikTerlihat = false;
   }
 
-  if (irStatus == LOW) {
-    Firebase.setString(fbdo, "/sistem/status_kapasitas", "Penuh");
-  } else {
-    Firebase.setString(fbdo, "/sistem/status_kapasitas", "Aman");
+  // ==========================================
+  // SENSOR IR (PENDETEKSI DAUN / ORGANIK)
+  // ==========================================
+  Serial.print("Sensor IR (Daun): ");
+
+  if (irStatus == LOW) { // LOW (0) artinya ada benda (Daun) yang terdeteksi
+    Serial.println("TERDETEKSI! (Sedang memilah Daun/Organik...)");
+    
+    // Kirim status teks ke Dashboard
+    if (Firebase.ready()) {
+      Firebase.setString(fbdo, "/sistem/status_aktif", "Memilah Organik (Daun)");
+    }
+    
+    // (Opsional) Kalau kamu ingin menambah hitungan jumlah sampah daun:
+    // Firebase.setInt(fbdo, "/sensor_organik/total", nilai_jumlah_organik_terbaru);
+    
+  } 
+  else { // HIGH (1) berarti tidak ada daun
+    Serial.println("Menunggu...");
+    
+    // Kirim status idle ke Dashboard
+    // if (Firebase.ready()) {
+    //   Firebase.setString(fbdo, "/sistem/status_aktif", "Menunggu Sampah...");
+    // }
   }
   
-  delay(500); // Jeda agar Firebase tidak ter-spam
+  delay(1000); // Beri jeda 1 detik agar Serial Monitor tidak terlalu ngebut
 
 
   // === UPDATE STATUS WEB ===
