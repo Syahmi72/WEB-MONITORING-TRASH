@@ -3,183 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITK Smart Waste - Premium Liquid Dashboard</title>
+    <title>Dashboard - ITK SmartWaste</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-        body { background: #0a0c0a; color: white; min-height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s; }
-        
-        /* Efek Liquid Orbs */
-        .orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -1; animation: move 15s infinite alternate; }
-        .orb-1 { top: 10%; left: 10%; width: 300px; height: 300px; background: rgba(204,255,0,0.1); }
-        .orb-2 { bottom: 10%; right: 10%; width: 400px; height: 400px; background: rgba(77,184,255,0.05); }
-        @keyframes move { from { transform: translate(0,0); } to { transform: translate(50px, 50px); } }
-
-        .app-layout { display: flex; height: 100vh; }
-        
-        /* Sidebar Mewah */
-        .sidebar { width: 280px; background: rgba(255,255,255,0.02); backdrop-filter: blur(30px); border-right: 1px solid rgba(255,255,255,0.05); padding: 40px 25px; display: flex; flex-direction: column; }
-        .logo { font-size: 22px; font-weight: 700; margin-bottom: 40px; text-align: center; }
-        .logo span { color: #ccff00; }
-        .profile { text-align: center; margin-bottom: 40px; }
-        .profile img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #ccff00; margin-bottom: 10px; object-fit: cover; }
-        
-        .nav-item { padding: 15px 20px; border-radius: 15px; cursor: pointer; color: #888; margin-bottom: 10px; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
-        .nav-item.active { background: rgba(204,255,0,0.1); color: #ccff00; border-left: 4px solid #ccff00; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-
-        /* Main Content */
-        .main-content { flex: 1; padding: 40px 60px; overflow-y: auto; }
-        .liquid-glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; padding: 30px; backdrop-filter: blur(15px); margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; }
-        .stat-card { text-align: center; }
-        .val-big { font-size: 38px; font-weight: 700; margin-top: 10px; }
-        
-        #map { height: 400px; border-radius: 20px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .chart-container { height: 300px; width: 100%; }
-        
-        .btn-logout { margin-top: auto; padding: 15px; border-radius: 12px; border: 1px solid #ff4757; color: #ff4757; background: transparent; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .btn-logout:hover { background: #ff4757; color: white; }
+        body { background: #0a0c0a; color: white; font-family: 'Poppins'; padding: 20px; }
+        .liquid-glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        #map { height: 300px; border-radius: 15px; }
     </style>
 </head>
 <body>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-
-    <div class="app-layout">
-        <aside class="sidebar">
-            <div class="logo">ITK <span>SMARTWASTE</span></div>
-            <div class="profile">
-                <img id="user-foto" src="https://via.placeholder.com/80" alt="Admin">
-                <h3 id="user-nama">Admin ITK</h3>
-                <p style="font-size: 12px; color: #ccff00;">Sistem Online ✅</p>
-            </div>
-            <div class="nav-item active">❖ Dashboard</div>
-            <button class="btn-logout" onclick="logout()">Logout</button>
-        </aside>
-
-        <main class="main-content">
-            <h1 style="font-size: 36px; font-weight: 300; margin-bottom: 30px;">Live <strong>Monitoring</strong></h1>
-            
-            <div class="liquid-glass" style="text-align: center;">
-                <p style="color: #888; font-size: 14px;">Status Pemilahan Real-Time</p>
-                <h2 id="status-live" style="color: #ccff00; font-size: 28px; letter-spacing: 1px;">Menunggu Sampah...</h2>
-            </div>
-
-            <div class="stat-grid">
-                <div class="liquid-glass stat-card">
-                    <p style="color: #888;">Logam</p>
-                    <div class="val-big" id="val-logam" style="color: #ccff00;">0</div>
-                </div>
-                <div class="liquid-glass stat-card">
-                    <p style="color: #888;">Plastik</p>
-                    <div class="val-big" id="val-plastik" style="color: #4db8ff;">0</div>
-                </div>
-                <div class="liquid-glass stat-card">
-                    <p style="color: #888;">Organik (Daun)</p>
-                    <div class="val-big" id="val-organik" style="color: #2ecc71;">0</div>
-                </div>
-            </div>
-
-            <div class="stat-grid" style="grid-template-columns: 1.5fr 1fr;">
-                <div class="liquid-glass">
-                    <h3 style="margin-bottom: 20px; color: #ccff00;">📍 Tracker Lokasi Real-Time</h3>
-                    <div id="map"></div>
-                </div>
-                <div class="liquid-glass">
-                    <h3 style="margin-bottom: 20px; color: #ccff00;">📈 Statistik Volume</h3>
-                    <div class="chart-container">
-                        <canvas id="myChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <div class="liquid-glass" style="text-align:center">
+        <h2 id="status-live" style="color:#ccff00">Menunggu Sampah...</h2>
     </div>
-
+    <div class="grid">
+        <div class="liquid-glass"><h4>Logam</h4><h1 id="val-logam" style="color:#ccff00">0</h1></div>
+        <div class="liquid-glass"><h4>Plastik</h4><h1 id="val-plastik" style="color:#4db8ff">0</h1></div>
+        <div class="liquid-glass"><h4>Organik</h4><h1 id="val-organik" style="color:#2ecc71">0</h1></div>
+    </div>
+    <div class="liquid-glass"><div id="map"></div></div>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es",
-            authDomain: "monitoring-tempat-sampah-c7e1a.firebaseapp.com",
-            databaseURL: "https://monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "monitoring-tempat-sampah-c7e1a",
-            storageBucket: "monitoring-tempat-sampah-c7e1a.firebasestorage.app",
-            messagingSenderId: "41746176408",
-            appId: "1:41746176408:web:f34430ca0c6a322f2433ed"
-        };
-        firebase.initializeApp(firebaseConfig);
+        const config = { databaseURL: "https://monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        firebase.initializeApp(config);
         const db = firebase.database();
-        const auth = firebase.auth();
-
-        // Cek Login
-        auth.onAuthStateChanged(user => {
-            if(!user) window.location.replace("/login.html");
-            else {
-                document.body.style.opacity = "1";
-                document.getElementById('user-nama').innerText = user.displayName || "Admin ITK";
-                db.ref('users_profile/' + user.uid + '/foto').once('value').then(s => {
-                    if(s.exists()) document.getElementById('user-foto').src = s.val();
-                });
-            }
-        });
-
-        function logout() { auth.signOut().then(() => window.location.replace("/login.html")); }
-
-        // Setup Chart
-        const ctx = document.getElementById('myChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Logam', 'Plastik', 'Organik'],
-                datasets: [{
-                    data: [0, 0, 0],
-                    backgroundColor: ['#ccff00', '#4db8ff', '#2ecc71'],
-                    borderWidth: 0,
-                    hoverOffset: 20
-                }]
-            },
-            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#888' } } } }
-        });
-
-        // Setup Map
-        const map = L.map('map', { zoomControl: false }).setView([-1.1491, 116.8612], 15);
+        const map = L.map('map').setView([-1.149, 116.899], 15);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-        const marker = L.marker([-1.1491, 116.8612]).addTo(map);
-
-        // Firebase Listeners
-        db.ref('/sistem/status_aktif').on('value', s => {
-            const val = s.val() || "Menunggu Sampah...";
-            document.getElementById('status-live').innerText = val;
-            if(val.includes("Logam")) document.getElementById('status-live').style.color = "#ccff00";
-            else if(val.includes("Plastik")) document.getElementById('status-live').style.color = "#4db8ff";
-            else if(val.includes("Organik")) document.getElementById('status-live').style.color = "#2ecc71";
-            else document.getElementById('status-live').style.color = "#ccff00";
-        });
-
-        function updateData(id, val, index) {
-            document.getElementById('val-'+id).innerText = val || 0;
-            myChart.data.datasets[0].data[index] = val || 0;
-            myChart.update();
-        }
-
-        db.ref('/sensor_induktif/total').on('value', s => updateData('logam', s.val(), 0));
-        db.ref('/sensor_plastik/total').on('value', s => updateData('plastik', s.val(), 1));
-        db.ref('/sensor_organik/total').on('value', s => updateData('organik', s.val(), 2));
-
-        db.ref('/sistem/lokasi').on('value', s => {
-            const loc = s.val();
-            if(loc && loc.lat && loc.lng) {
-                const pos = [loc.lat, loc.lng];
-                marker.setLatLng(pos);
-                map.flyTo(pos, 17, { animate: true, duration: 2 });
-            }
-        });
+        const marker = L.marker([-1.149, 116.899]).addTo(map);
+        db.ref('/sistem/status_aktif').on('value', s => document.getElementById('status-live').innerText = s.val());
+        db.ref('/sensor_induktif/total').on('value', s => document.getElementById('val-logam').innerText = s.val());
+        db.ref('/sensor_plastik/total').on('value', s => document.getElementById('val-plastik').innerText = s.val());
+        db.ref('/sensor_organik/total').on('value', s => document.getElementById('val-organik').innerText = s.val());
+        db.ref('/sistem/lokasi').on('value', s => { if(s.val()){ marker.setLatLng([s.val().lat, s.val().lng]); map.flyTo([s.val().lat, s.val().lng], 16); }});
     </script>
 </body>
 </html>
