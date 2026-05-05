@@ -139,6 +139,9 @@
             .hero-title { font-size: 28px; text-align: center; }
             .stat-grid { grid-template-columns: 1fr; }
         }
+        
+        /* Tambahan agar pin GPS tepat di tengah */
+        .custom-pin { display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
@@ -207,7 +210,8 @@
                 <div class="liquid-glass" style="margin-bottom: 30px;">
                     <h3 style="color: #ccff00; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between;">
                         <span>📍 GPS Live Tracker</span>
-                        <span style="font-size: 12px; color: #888; font-weight: 400;">Koneksi: <span id="map-status" style="color: #2ecc71;">Terhubung</span></span>
+                        <!-- Status Peta akan berubah ketika data internet ESP32 masuk -->
+                        <span style="font-size: 12px; color: #888; font-weight: 400;">Koneksi: <span id="map-status" style="color: #ff9f43;">Menunggu ESP32...</span></span>
                     </h3>
                     <div id="map" style="height: 350px; border-radius: 15px; z-index: 1;"></div>
                 </div>
@@ -385,7 +389,7 @@
         let mapMarker;
 
         function initMap() {
-            // Default Lokasi: Institut Teknologi Kalimantan (ITK) Balikpapan
+            // Default Lokasi: Institut Teknologi Kalimantan (ITK) Balikpapan (Lokasi statis awal)
             const defaultLokasi = [-1.149, 116.899]; 
 
             map = L.map('map').setView(defaultLokasi, 16);
@@ -405,16 +409,29 @@
             });
 
             mapMarker = L.marker(defaultLokasi, {icon: customIcon}).addTo(map);
-            mapMarker.bindPopup("<b style='color:black;'>Alat SmartWaste</b><br>Lokasi Area ITK").openPopup();
+            mapMarker.bindPopup("<b style='color:black;'>Menunggu Sinyal ESP32...</b>").openPopup();
 
-            // Mendengarkan perubahan lokasi dari ESP32 via Firebase
-            // (Agar ini berfungsi, ESP32 harus mengirim data ke '/sistem/lokasi/lat' dan '/sistem/lokasi/lng')
+            // Mendengarkan perubahan lokasi dari ESP32 via Firebase secara Real-Time
             db.ref('/sistem/lokasi').on('value', (snapshot) => {
                 const lokasi = snapshot.val();
                 if (lokasi && lokasi.lat && lokasi.lng) {
                     const newLatLng = [lokasi.lat, lokasi.lng];
+                    
+                    // Pindahkan titik GPS ke lokasi jaringan internet alat ESP32
                     mapMarker.setLatLng(newLatLng);
-                    map.flyTo(newLatLng, 17, { animate: true, duration: 1.5 });
+                    
+                    // Update keterangan Pin
+                    mapMarker.bindPopup("<b style='color:black;'>Lokasi Real-time Alat</b><br>Berdasarkan Jaringan WiFi/Internet").openPopup();
+                    
+                    // Terbang perlahan ke koordinat ESP32
+                    map.flyTo(newLatLng, 17, { animate: true, duration: 2.0 });
+
+                    // Ubah UI Teks Konfirmasi Koneksi
+                    const statusEl = document.getElementById('map-status');
+                    if(statusEl) {
+                        statusEl.innerText = "Real-time via IP Aktif ✅";
+                        statusEl.style.color = "#ccff00";
+                    }
                 }
             });
         }
