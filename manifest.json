@@ -3,6 +3,7 @@
   "short_name": "SmartWaste",
   "start_url": "/index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#101210",
   "theme_color": "#ccff00",
   "icons": [

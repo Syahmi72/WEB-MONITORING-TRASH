@@ -172,6 +172,16 @@
             .info-box h1 { font-size: 28px; }
             .interaction-tip { bottom: 20px; right: 20px; }
         }
+
+        /* Mencegah pull-to-refresh di seluruh halaman */
+        body {
+            overscroll-behavior-y: contain;
+        }
+
+        /* Memastikan area 3D menerima interaksi sentuhan sepenuhnya */
+        #canvas-container {
+            touch-action: none; 
+        }
     </style>
 </head>
 <body>
@@ -204,7 +214,7 @@
                         <div style="font-size: 24px;">⚙️</div>
                         <div>
                             <h4>Sensor Induktif Precision</h4>
-                            <span>Mendeteksi dan memilah material logam secara otomatis.</span>
+                            <span>Mendeteksi dan memilah material logam secara otomatis melalui prinsip induksi elektromagnetik.</span>
                         </div>
                     </div>
 
@@ -213,7 +223,7 @@
                         <div style="font-size: 24px;">💧</div>
                         <div>
                             <h4>Capacitive Plastic Sensor</h4>
-                            <span>Mampu mengenali material non-logam seperti plastik dengan akurasi tinggi.</span>
+                            <span>Mampu mengenali material non-logam seperti plastik dengan mendeteksi perubahan konstanta dielektrik.</span>
                         </div>
                     </div>
 
@@ -222,7 +232,7 @@
                         <div style="font-size: 24px;">🌿</div>
                         <div>
                             <h4>Infrared Organic Scanner</h4>
-                            <span>Mendeteksi dan memilah sampah organik seperti dedaunan.</span>
+                            <span>Mendeteksi dan memilah sampah organik seperti dedaunan menggunakan pantulan cahaya inframerah.</span>
                         </div>
                     </div>
 
@@ -231,7 +241,7 @@
                         <div style="font-size: 24px;">📡</div>
                         <div>
                             <h4>Terhubung Real-Time</h4>
-                            <span>Pantau volume dan proses pemilahan langsung melalui Dashboard awan.</span>
+                            <span>Pantau volume dan proses pemilahan secara langsung melalui Dashboard ITK SmartWaste.</span>
                         </div>
                     </div>
                 </div>
