@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#include <HTTPClient.h> // Library untuk mengambil data lokasi via IP
 
 // === KONFIGURASI WIFI ===
 #define WIFI_SSID "Teman Kenangan"
@@ -26,6 +25,14 @@ int totalPlastik = 0; bool plastikTerlihat = false;
 int totalOrganik = 0; bool organikTerlihat = false;
 String statusTerakhir = ""; 
 
+// ================================================
+// 📍 KOORDINAT LOKASI ALAT (HARDCODE PRESISI)
+// Silakan buka Google Maps, klik kanan titik lokasi alat,
+// lalu copy angka koordinatnya ke sini.
+// ================================================
+float lokasi_latitude = -1.149112;   // Contoh: Titik di Kampus ITK Balikpapan
+float lokasi_longitude = 116.861234; 
+
 void setup() {
   Serial.begin(115200);
   
@@ -45,23 +52,12 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  // === FITUR PELACAKAN LOKASI OTOMATIS (IP GEOLOCATION) ===
-  HTTPClient http;
-  http.begin("http://ip-api.com/csv/?fields=lat,lon");
-  if(http.GET() > 0) {
-    String res = http.getString();
-    int koma = res.indexOf(',');
-    if(koma > 0) {
-      float lat = res.substring(0, koma).toFloat();
-      float lng = res.substring(koma + 1).toFloat();
-      if (Firebase.ready()) {
-        Firebase.setFloat(fbdo, "/sistem/lokasi/lat", lat);
-        Firebase.setFloat(fbdo, "/sistem/lokasi/lng", lng);
-        Serial.println(" ✓ Lokasi terkirim ke Dashboard!");
-      }
-    }
+  // === MENGIRIM KOORDINAT LOKASI PASTI KE DASHBOARD ===
+  if (Firebase.ready()) {
+    Firebase.setFloat(fbdo, "/sistem/lokasi/lat", lokasi_latitude);
+    Firebase.setFloat(fbdo, "/sistem/lokasi/lng", lokasi_longitude);
+    Serial.println(" ✓ Koordinat GPS Hardcode terkirim ke Dashboard!");
   }
-  http.end();
 }
 
 void loop() {
