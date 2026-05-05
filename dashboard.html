@@ -394,10 +394,12 @@
 
             map = L.map('map').setView(defaultLokasi, 16);
 
-            // Layer Peta OpenStreetMap dengan filter Dark Mode
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap',
-                className: 'dark-map-tiles'
+            // ==========================================
+            // MENGGUNAKAN TAMPILAN SATELLITE GOOGLE MAPS
+            // ==========================================
+            L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                attribution: '© Google Maps',
+                maxZoom: 20
             }).addTo(map);
 
             // Membuat Ikon Kustom agar senada dengan warna Neon
@@ -417,19 +419,19 @@
                 if (lokasi && lokasi.lat && lokasi.lng) {
                     const newLatLng = [lokasi.lat, lokasi.lng];
                     
-                    // Pindahkan titik GPS ke lokasi jaringan internet alat ESP32
+                    // Pindahkan titik GPS
                     mapMarker.setLatLng(newLatLng);
                     
                     // Update keterangan Pin
-                    mapMarker.bindPopup("<b style='color:black;'>Lokasi Real-time Alat</b><br>Berdasarkan Jaringan WiFi/Internet").openPopup();
+                    mapMarker.bindPopup("<b style='color:black;'>Lokasi Real-time Alat</b><br>Berdasarkan Hardcode ESP32").openPopup();
                     
                     // Terbang perlahan ke koordinat ESP32
-                    map.flyTo(newLatLng, 17, { animate: true, duration: 2.0 });
+                    map.flyTo(newLatLng, 18, { animate: true, duration: 2.0 }); // Zoom level dinaikkan ke 18 agar satelit lebih dekat
 
                     // Ubah UI Teks Konfirmasi Koneksi
                     const statusEl = document.getElementById('map-status');
                     if(statusEl) {
-                        statusEl.innerText = "Real-time via IP Aktif ✅";
+                        statusEl.innerText = "Satelit Terkunci ✅";
                         statusEl.style.color = "#ccff00";
                     }
                 }
