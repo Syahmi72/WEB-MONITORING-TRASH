@@ -2,64 +2,396 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITK SmartWaste - Pemilah Sampah AI</title>
+    
+    <!-- Konfigurasi PWA (Aplikasi HP) -->
     <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#101210">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Library 3D Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
     <style>
+        /* ================= DEKORASI DASAR ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-        body { background-color: #0a0c0a; color: #ffffff; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
-        #canvas-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; touch-action: none; }
-        .overlay-gradient { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(90deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.4) 100%); z-index: 1; pointer-events: none; }
-        .ui-layer { position: relative; z-index: 10; width: 100%; min-height: 100vh; pointer-events: none; padding: 30px 50px; }
-        header { display: flex; justify-content: space-between; pointer-events: auto; margin-bottom: 50px; }
-        .btn-login { background: rgba(204, 255, 0, 0.1); color: #ccff00; border: 1px solid #ccff00; padding: 10px 25px; border-radius: 30px; text-decoration: none; font-weight: 600; transition: 0.3s; pointer-events: auto; }
-        .btn-login:hover { background: #ccff00; color: #0a0c0a; }
-        .info-box { max-width: 500px; pointer-events: auto; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 40px; }
-        .info-box h1 { font-size: 36px; margin-bottom: 20px; }
-        .info-box h1 strong { color: #ccff00; }
-        .feature-item { display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border-left: 3px solid #ccff00; margin-bottom: 15px; }
-        @media (max-width: 768px) { .ui-layer { padding: 20px; } .info-box { padding: 25px; } .info-box h1 { font-size: 28px; } }
+        
+        body { 
+            margin: 0; 
+            overflow-x: hidden; 
+            background-color: #0a0c0a;
+            color: #ffffff;
+        }
+
+        /* Container untuk Canvas 3D */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        /* Overlay Gradasi agar teks mudah dibaca */
+        .overlay-gradient {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(90deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.4) 50%, rgba(10,12,10,0.1) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ================= UI LAYOUT ================= */
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+
+        /* Header (Kiri Atas) */
+        header {
+            padding: 30px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        .btn-login {
+            background: rgba(204, 255, 0, 0.1);
+            color: #ccff00;
+            border: 1px solid #ccff00;
+            padding: 10px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        .btn-login:hover {
+            background: #ccff00;
+            color: #0a0c0a;
+            box-shadow: 0 0 20px rgba(204, 255, 0, 0.5);
+        }
+
+        /* Konten Utama (Mengenal Alat) */
+        .content-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 50px;
+            pointer-events: none;
+        }
+
+        .info-box {
+            max-width: 500px;
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(-20px);
+            animation: slideIn 1s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+
+        .info-box h1 {
+            font-size: 36px;
+            font-weight: 300;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+        .info-box h1 strong { font-weight: 700; color: #ccff00; }
+        
+        .info-box p {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 3px solid #ccff00;
+        }
+        .feature-item h4 { font-size: 14px; color: #fff; margin-bottom: 3px; }
+        .feature-item span { font-size: 12px; color: #888; }
+
+        /* Interaksi Tip */
+        .interaction-tip {
+            position: absolute;
+            bottom: 40px;
+            right: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #ccff00;
+            font-size: 12px;
+            pointer-events: none;
+            animation: pulseText 2s infinite;
+        }
+        .mouse-icon { width: 24px; height: 36px; border: 2px solid #ccff00; border-radius: 15px; position: relative; }
+        .mouse-wheel { width: 4px; height: 8px; background: #ccff00; border-radius: 2px; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); animation: scrollMouse 1.5s infinite; }
+
+        @keyframes pulseText { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes scrollMouse { 0% { top: 6px; opacity: 1; } 100% { top: 18px; opacity: 0; } }
+
+        /* Responsive HP */
+        @media (max-width: 768px) {
+            header { padding: 20px; }
+            .overlay-gradient { background: linear-gradient(180deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.7) 40%, rgba(10,12,10,0.2) 100%); }
+            .content-wrap { padding: 0 20px; align-items: flex-start; margin-top: 20px; }
+            .info-box { padding: 25px; }
+            .info-box h1 { font-size: 28px; }
+            .interaction-tip { bottom: 20px; right: 20px; }
+        }
+
+        html, body {
+            /* Mencegah scroll memicu refresh di seluruh halaman */
+            overscroll-behavior-y: none;
+            touch-action: pan-x pan-y;
+        }
+
+        #canvas-container {
+            /* Mematikan semua gerakan default browser (scroll/zoom) pada area 3D */
+            touch-action: none; 
+            -webkit-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Container untuk 3D -->
     <div id="canvas-container"></div>
     <div class="overlay-gradient"></div>
+
+    <!-- UI Layer -->
     <div class="ui-layer">
+        
+        <!-- Header & Tombol Login Kiri Atas -->
         <header>
-            <a href="login.html" class="btn-login">Masuk Dashboard</a>
-            <div style="font-weight: 700; color: #fff;">ITK <span style="color: #ccff00;">WASTE</span></div>
+            <a href="login.html" class="btn-login">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                Masuk Dashboard
+            </a>
+            <div style="font-weight: 700; letter-spacing: 1px; color: #fff;">ITK <span style="color: #ccff00;">WASTE</span></div>
         </header>
-        <div class="info-box">
-            <h1>Masa Depan<br><strong>Pengelolaan Sampah</strong></h1>
-            <p style="color: #aaa; font-size: 14px; margin-bottom: 30px;">ITK SmartWaste menggunakan IoT untuk memilah sampah otomatis secara real-time.</p>
-            <div class="feature-list">
-                <div class="feature-item"><div>⚙️</div><div><h4>Sensor Induktif Precision</h4><span>Memilah material logam secara otomatis.</span></div></div>
-                <div class="feature-item"><div>💧</div><div><h4>Capacitive Plastic Sensor</h4><span>Mendeteksi material plastik dengan akurasi tinggi.</span></div></div>
-                <div class="feature-item"><div>🌿</div><div><h4>Infrared Organic Scanner</h4><span>Memilah sampah organik seperti dedaunan.</span></div></div>
+
+        <!-- Penjelasan Alat -->
+        <div class="content-wrap">
+            <div class="info-box">
+                <h1>Masa Depan<br><strong>Pengelolaan Sampah</strong></h1>
+                <p>ITK SmartWaste adalah sistem cerdas berbasis IoT yang mampu mengenali dan memilah sampah secara otomatis ke dalam kategori yang tepat untuk menjaga lingkungan kampus tetap hijau.</p>
+                
+                <div class="feature-list">
+                    <!-- 1. Sensor Induktif (Logam) -->
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">⚙️</div>
+                        <div>
+                            <h4>Sensor Induktif Precision</h4>
+                            <span>Mengenali dan memilah material berbasis logam secara otomatis melalui induksi elektromagnetik.</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Sensor Kapasitif (Plastik) -->
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">💧</div>
+                        <div>
+                            <h4>Capacitive Plastic Sensor</h4>
+                            <span>Mendeteksi material non-logam seperti plastik dengan akurasi tinggi berdasarkan perubahan konstanta dielektrik.</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Sensor Infrared (Organik/Daun) -->
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">🌿</div>
+                        <div>
+                            <h4>Infrared Organic Scanner</h4>
+                            <span>Memilah sampah organik seperti dedaunan menggunakan pantulan cahaya inframerah secara real-time.</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Real-Time Status -->
+                    <div class="feature-item">
+                        <div style="font-size: 24px;">📡</div>
+                        <div>
+                            <h4>Terhubung Real-Time</h4>
+                            <span>Pantau seluruh proses pemilahan dan statistik volume sampah langsung melalui Dashboard ITK SmartWaste.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="interaction-tip">
+            Tarik layar untuk memutar 3D
+            <div class="mouse-icon"><div class="mouse-wheel"></div></div>
+        </div>
     </div>
+
+    <!-- Pendaftaran Service Worker PWA -->
     <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('PWA Service Worker terdaftar!'))
+                .catch(err => console.log('PWA gagal terdaftar:', err));
+            });
+        }
+    </script>
+
+    <!-- SCRIPT 3D INTERAKTIF -->
+    <script>
+        // 1. Setup Scene, Camera, Renderer
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // 2. Setup OrbitControls (Untuk bisa diputar oleh User)
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableZoom = false; controls.autoRotate = true;
+        controls.enableZoom = false; // Matikan zoom agar tidak mengganggu scroll HP
+        controls.enablePan = false;
+        controls.autoRotate = true; // Objek berputar otomatis perlahan
+        controls.autoRotateSpeed = 1.5;
+
+        // 3. Membuat Objek 3D (Simulasi Smart Bin)
+        const smartBinGroup = new THREE.Group();
+
+        // Badan Utama (Besi Gelap)
         const bodyGeo = new THREE.CylinderGeometry(2.5, 2.2, 7, 64);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x101210, metalness: 0.9, roughness: 0.2 });
+        const bodyMat = new THREE.MeshStandardMaterial({ 
+            color: 0x101210, 
+            metalness: 0.9, 
+            roughness: 0.2 
+        });
         const body = new THREE.Mesh(bodyGeo, bodyMat);
-        scene.add(body);
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambient);
-        const light = new THREE.PointLight(0xccff00, 2, 50); light.position.set(5, 5, 5); scene.add(light);
+        smartBinGroup.add(body);
+
+        // Kerangka Wireframe Neon (Efek Hologram/Pemindai)
+        const wireMat = new THREE.MeshBasicMaterial({ 
+            color: 0xccff00, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.15 
+        });
+        const wireMesh = new THREE.Mesh(bodyGeo, wireMat);
+        wireMesh.scale.set(1.02, 1.02, 1.02); // Sedikit lebih besar dari badan asli
+        smartBinGroup.add(wireMesh);
+
+        // Inti Cahaya di dalam Bin
+        const coreGeo = new THREE.CylinderGeometry(1.8, 1.8, 6.8, 32);
+        const coreMat = new THREE.MeshBasicMaterial({ 
+            color: 0xccff00, 
+            transparent: true, 
+            opacity: 0.1 
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        smartBinGroup.add(core);
+
+        // Cincin Neon di Bagian Atas
+        const ringGeo = new THREE.TorusGeometry(2.6, 0.05, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0xccff00 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.y = 3.5;
+        ring.rotation.x = Math.PI / 2;
+        smartBinGroup.add(ring);
+
+        // Posisikan ke agak kanan layar
+        if(window.innerWidth > 768) {
+            smartBinGroup.position.x = 4;
+        } else {
+            smartBinGroup.position.x = 0; // Ketengah jika di HP
+        }
+        scene.add(smartBinGroup);
+
+        // 4. Pencahayaan (Lighting)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xccff00, 2, 50);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        const backLight = new THREE.PointLight(0x4db8ff, 1, 50); // Cahaya biru dari belakang
+        backLight.position.set(-5, -5, -5);
+        scene.add(backLight);
+
         camera.position.z = 12;
-        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+        camera.position.y = 2;
+
+        // 5. Animasi Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Wajib dipanggil untuk autorotate & interaksi
+            
+            // Efek cincin naik turun
+            ring.position.y = 3.5 + Math.sin(Date.now() * 0.002) * 0.2;
+
+            renderer.render(scene, camera);
+        }
         animate();
-        document.addEventListener('touchmove', (e) => { if (e.target.closest('#canvas-container')) { if (e.cancelable) e.preventDefault(); } }, { passive: false });
+
+        // 6. Penyesuaian saat layar di-resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            if(window.innerWidth > 768) {
+                smartBinGroup.position.x = 4;
+            } else {
+                smartBinGroup.position.x = 0;
+            }
+        });
+    </script>
+
+    <!-- Script untuk mengunci interaksi sentuhan pada area 3D -->
+    <script>
+        // Mengunci agar tarikan layar ke bawah tidak refresh
+        document.addEventListener('touchmove', function(e) {
+            // Jika sentuhan terjadi di dalam area canvas 3D, matikan fungsi scroll/refresh browser
+            if (e.target.closest('#canvas-container')) {
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Tambahan: Pastikan saat memutar model, layar tidak bergeser
+        const canvas3d = document.getElementById('canvas-container');
+        canvas3d.addEventListener('touchstart', function(e) {
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
     </script>
 </body>
 </html>
