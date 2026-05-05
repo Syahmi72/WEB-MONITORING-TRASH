@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ITK SmartWaste - Pemilah Sampah AI</title>
     
     <!-- Konfigurasi PWA (Aplikasi HP) -->
@@ -25,6 +25,7 @@
             overflow-x: hidden; 
             background-color: #0a0c0a;
             color: #ffffff;
+            /* Biarkan browser menangani scroll secara natural agar bisa refresh */
         }
 
         /* Container untuk Canvas 3D */
@@ -35,6 +36,10 @@
             width: 100vw;
             height: 100vh;
             z-index: 0;
+            /* Area 3D tidak memicu scroll/refresh saat diputar */
+            touch-action: none; 
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         /* Overlay Gradasi agar teks mudah dibaca */
@@ -166,24 +171,14 @@
         /* Responsive HP */
         @media (max-width: 768px) {
             header { padding: 20px; }
-            .overlay-gradient { background: linear-gradient(180deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.7) 40%, rgba(10,12,10,0.2) 100%); }
-            .content-wrap { padding: 0 20px; align-items: flex-start; margin-top: 20px; }
+            /* Gradasi di HP dibuat lebih transparan di bawah agar 3D terlihat jelas */
+            .overlay-gradient { background: linear-gradient(180deg, rgba(10,12,10,0.9) 0%, rgba(10,12,10,0.7) 40%, rgba(10,12,10,0.0) 100%); }
+            /* Tambah padding bawah 350px agar bisa di scroll ke bawah khusus area 3D */
+            .content-wrap { padding: 0 20px 350px 20px; align-items: flex-start; margin-top: 20px; }
             .info-box { padding: 25px; }
             .info-box h1 { font-size: 28px; }
-            .interaction-tip { bottom: 20px; right: 20px; }
-        }
-
-        html, body {
-            /* Mencegah scroll memicu refresh di seluruh halaman */
-            overscroll-behavior-y: none;
-            touch-action: pan-x pan-y;
-        }
-
-        #canvas-container {
-            /* Mematikan semua gerakan default browser (scroll/zoom) pada area 3D */
-            touch-action: none; 
-            -webkit-user-select: none;
-            user-select: none;
+            /* Fix tip interaksi agar selalu ada di pojok HP */
+            .interaction-tip { bottom: 20px; right: 20px; position: fixed; }
         }
     </style>
 </head>
@@ -328,11 +323,13 @@
         ring.rotation.x = Math.PI / 2;
         smartBinGroup.add(ring);
 
-        // Posisikan ke agak kanan layar
+        // Posisikan
         if(window.innerWidth > 768) {
             smartBinGroup.position.x = 4;
+            smartBinGroup.position.y = 0;
         } else {
-            smartBinGroup.position.x = 0; // Ketengah jika di HP
+            smartBinGroup.position.x = 0; 
+            smartBinGroup.position.y = -2.5; // Agak diturunkan di HP agar tidak menabrak teks
         }
         scene.add(smartBinGroup);
 
@@ -371,27 +368,12 @@
             
             if(window.innerWidth > 768) {
                 smartBinGroup.position.x = 4;
+                smartBinGroup.position.y = 0;
             } else {
                 smartBinGroup.position.x = 0;
+                smartBinGroup.position.y = -2.5;
             }
         });
-    </script>
-
-    <!-- Script untuk mengunci interaksi sentuhan pada area 3D -->
-    <script>
-        // Mengunci agar tarikan layar ke bawah tidak refresh
-        document.addEventListener('touchmove', function(e) {
-            // Jika sentuhan terjadi di dalam area canvas 3D, matikan fungsi scroll/refresh browser
-            if (e.target.closest('#canvas-container')) {
-                if (e.cancelable) e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Tambahan: Pastikan saat memutar model, layar tidak bergeser
-        const canvas3d = document.getElementById('canvas-container');
-        canvas3d.addEventListener('touchstart', function(e) {
-            if (e.cancelable) e.preventDefault();
-        }, { passive: false });
     </script>
 </body>
 </html>
