@@ -1,172 +1,106 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <FirebaseESP32.h>
+#include <HTTPClient.h> // Library untuk mengambil data lokasi via IP
 
 // === KONFIGURASI WIFI ===
-#define WIFI_SSID "ITK-LAB2.X"
-#define WIFI_PASSWORD "K@mpusM3rdeka!"
+#define WIFI_SSID "Teman Kenangan"
+#define WIFI_PASSWORD "PaduanPas!05"
 
 // === KONFIGURASI FIREBASE ===
 #define FIREBASE_HOST "monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app"
 #define FIREBASE_AUTH "kqGzNtFg7WN8ZAx5N5uqLaga6WBaSklVmjDa5Dfe"
 
 // === PIN SENSOR ===
-#define PIN_INDUKTIF 4    // GPIO 4 untuk sensor induktif
-#define PIN_KAPASITIF 19  // GPIO 19 untuk sensor kapasitif
-#define PIN_IR 22
+#define PIN_INDUKTIF 4    
+#define PIN_KAPASITIF 19  
+#define PIN_IR 22         
 
 // === VARIABEL GLOBAL ===
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-int totalLogam = 0;
-bool logamTerlihat = false;
-
-int totalPlastik = 0;
-bool plastikTerlihat = false;
-
-String statusTerakhir = ""; // Untuk mencegah spamming Firebase
+int totalLogam = 0;   bool logamTerlihat = false;
+int totalPlastik = 0; bool plastikTerlihat = false;
+int totalOrganik = 0; bool organikTerlihat = false;
+String statusTerakhir = ""; 
 
 void setup() {
   Serial.begin(115200);
-  delay(1000); 
-
-  Serial.println("\n\n=================================");
-  Serial.println("   MONITORING TEMPAT SAMPAH");
-  Serial.println("=================================");
-
-  // KEDUA PIN WAJIB PULLUP!
-  // Karena sensor NPN NC (Kapasitif) butuh tarikan ke atas saat memutus arus (lampu mati)
-  pinMode(PIN_INDUKTIF, INPUT_PULLUP);
-  pinMode(PIN_KAPASITIF, INPUT_PULLUP); 
-  pinMode(PIN_IR, INPUT);
   
-  pinMode(2, OUTPUT); // LED built-in ESP32
-  digitalWrite(2, LOW);
+  // Konfigurasi Pin sesuai hardware Sami
+  pinMode(PIN_INDUKTIF, INPUT_PULLUP);
+  pinMode(PIN_KAPASITIF, INPUT_PULLDOWN); // Mengembalikan ke PULLDOWN sesuai koreksi hardware
+  pinMode(PIN_IR, INPUT_PULLUP);
+  pinMode(2, OUTPUT); 
 
-  Serial.println("✓ Pin sensor sudah diset (Mode PULLUP)");
-
-  // Setup WiFi
-  Serial.print("🔄 Menghubungkan WiFi...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("🔄 Menghubungkan WiFi");
+  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
+  Serial.println(" ✓ Terhubung!");
 
-  int timeout = 0;
-  while (WiFi.status() != WL_CONNECTED && timeout < 20) {
-    delay(500);
-    Serial.print(".");
-    timeout++;
-  }
+  config.host = FIREBASE_HOST;
+  config.signer.tokens.legacy_token = FIREBASE_AUTH;
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println(" ✓ WiFi TERHUBUNG!");
-    
-    // Setup Firebase
-    Serial.print("🔄 Setup Firebase...");
-    config.host = FIREBASE_HOST;
-    config.signer.tokens.legacy_token = FIREBASE_AUTH;
-    Firebase.begin(&config, &auth);
-    Firebase.reconnectWiFi(true);
-    
-    // Optimasi koneksi Firebase
-    fbdo.setBSSLBufferSize(1024, 1024);
-    Firebase.setReadTimeout(fbdo, 1000 * 60);
-    Firebase.setwriteSizeLimit(fbdo, "tiny");
-    
-    Serial.println(" ✓ Firebase OK!");
-  } else {
-    Serial.println(" ✗ WiFi GAGAL! Mode offline...");
+  // === FITUR PELACAKAN LOKASI OTOMATIS (IP GEOLOCATION) ===
+  HTTPClient http;
+  http.begin("http://ip-api.com/csv/?fields=lat,lon");
+  if(http.GET() > 0) {
+    String res = http.getString();
+    int koma = res.indexOf(',');
+    if(koma > 0) {
+      float lat = res.substring(0, koma).toFloat();
+      float lng = res.substring(koma + 1).toFloat();
+      if (Firebase.ready()) {
+        Firebase.setFloat(fbdo, "/sistem/lokasi/lat", lat);
+        Firebase.setFloat(fbdo, "/sistem/lokasi/lng", lng);
+        Serial.println(" ✓ Lokasi terkirim ke Dashboard!");
+      }
+    }
   }
-  Serial.println("=================================\n");
+  http.end();
 }
 
 void loop() {
-  // Baca kedua sensor
-  int bacaSensorInduktif = digitalRead(PIN_INDUKTIF);
-  int bacaSensorKapasitif = digitalRead(PIN_KAPASITIF);
-  int irStatus = digitalRead(PIN_IR);
+  // Membaca semua sensor
+  bool adaLogam = (digitalRead(PIN_INDUKTIF) == LOW);
+  bool adaPlastik = (digitalRead(PIN_KAPASITIF) == LOW); // Logika: Lampu Mati = Plastik Terdeteksi
+  bool adaOrganik = (digitalRead(PIN_IR) == LOW);
 
-  // LOGIKA FINAL (DISILANG SESUAI SIFAT FISIK SENSOR)
-  // Induktif (NO): Deteksi = LOW, Standby = HIGH
-  // Kapasitif (NC): Deteksi = HIGH (Lampu mati), Standby = LOW (Lampu nyala)
-  bool adaLogam = (bacaSensorInduktif == LOW);
-  bool adaPlastik = (bacaSensorKapasitif == HIGH);
+  digitalWrite(2, (adaLogam || adaPlastik || adaOrganik) ? HIGH : LOW);
 
-  // Nyalakan LED biru di ESP32 jika salah satu mendeteksi
-  digitalWrite(2, (adaLogam || adaPlastik) ? HIGH : LOW);
-
-  // === MENGHITUNG LOGAM ===
+  // Penghitungan Logam
   if (adaLogam && !logamTerlihat) {
-    totalLogam++;
-    logamTerlihat = true;
-    Serial.print(">> LOGAM MASUK! Total: ");
-    Serial.println(totalLogam);
-    
-    if (Firebase.ready()) {
-      Firebase.setInt(fbdo, "/sensor_induktif/total", totalLogam);
-    }
-  } else if (!adaLogam) {
-    logamTerlihat = false;
-  }
+    totalLogam++; logamTerlihat = true;
+    Firebase.setInt(fbdo, "/sensor_induktif/total", totalLogam);
+  } else if (!adaLogam) { logamTerlihat = false; }
 
-  // === MENGHITUNG PLASTIK ===
+  // Penghitungan Plastik
   if (adaPlastik && !plastikTerlihat) {
-    totalPlastik++;
-    plastikTerlihat = true;
-    Serial.print(">> PLASTIK MASUK! Total: ");
-    Serial.println(totalPlastik);
-    
-    if (Firebase.ready()) {
-      Firebase.setInt(fbdo, "/sensor_plastik/total", totalPlastik);
-    }
-  } else if (!adaPlastik) {
-    plastikTerlihat = false;
+    totalPlastik++; plastikTerlihat = true;
+    Firebase.setInt(fbdo, "/sensor_plastik/total", totalPlastik);
+  } else if (!adaPlastik) { plastikTerlihat = false; }
+
+  // Penghitungan Organik (Daun)
+  if (adaOrganik && !organikTerlihat) {
+    totalOrganik++; organikTerlihat = true;
+    Firebase.setInt(fbdo, "/sensor_organik/total", totalOrganik);
+  } else if (!adaOrganik) { organikTerlihat = false; }
+
+  // Update Status Teks Dashboard
+  String st = "Menunggu Sampah...";
+  if (adaLogam) st = "Memilah Logam";
+  else if (adaPlastik) st = "Memilah Plastik";
+  else if (adaOrganik) st = "Memilah Organik";
+
+  if (st != statusTerakhir) {
+    Firebase.setString(fbdo, "/sistem/status_aktif", st);
+    statusTerakhir = st;
+    Serial.print("Status Baru: ");
+    Serial.println(st);
   }
-
-  // ==========================================
-  // SENSOR IR (PENDETEKSI DAUN / ORGANIK)
-  // ==========================================
-  Serial.print("Sensor IR (Daun): ");
-
-  if (irStatus == LOW) { // LOW (0) artinya ada benda (Daun) yang terdeteksi
-    Serial.println("TERDETEKSI! (Sedang memilah Daun/Organik...)");
-    
-    // Kirim status teks ke Dashboard
-    if (Firebase.ready()) {
-      Firebase.setString(fbdo, "/sistem/status_aktif", "Memilah Organik (Daun)");
-    }
-    
-    // (Opsional) Kalau kamu ingin menambah hitungan jumlah sampah daun:
-    // Firebase.setInt(fbdo, "/sensor_organik/total", nilai_jumlah_organik_terbaru);
-    
-  } 
-  else { // HIGH (1) berarti tidak ada daun
-    Serial.println("Menunggu...");
-    
-    // Kirim status idle ke Dashboard
-    // if (Firebase.ready()) {
-    //   Firebase.setString(fbdo, "/sistem/status_aktif", "Menunggu Sampah...");
-    // }
-  }
-  
-  delay(1000); // Beri jeda 1 detik agar Serial Monitor tidak terlalu ngebut
-
-
-  // === UPDATE STATUS WEB ===
-  String statusLive = "Menunggu Sampah...";
-  if (adaLogam) {
-    statusLive = "Logam Terdeteksi!";
-  } else if (adaPlastik) {
-    statusLive = "Plastik Terdeteksi!";
-  }
-
-  // Hanya kirim ke Firebase jika tulisan statusnya berubah (Mencegah Spam)
-  if (statusLive != statusTerakhir) {
-    if (Firebase.ready()) {
-      Firebase.setString(fbdo, "/sistem/status_aktif", statusLive);
-    }
-    statusTerakhir = statusLive; // Simpan status terbaru
-  }
-
-  delay(100); 
+  delay(50); // Jeda responsif
 }
