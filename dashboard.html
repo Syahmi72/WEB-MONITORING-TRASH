@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITK Smart Waste - Liquid Dashboard</title>
-    <!-- Library Firebase, Chart.js & Leaflet (Peta) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Leaflet CSS & JS untuk Peta -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -118,9 +117,19 @@
         .circle-wrap.plastik { background: conic-gradient(#4db8ff 0%, rgba(255,255,255,0.05) 0%); }
         .circle-wrap.organik { background: conic-gradient(#2ecc71 0%, rgba(255,255,255,0.05) 0%); }
 
-        /* Filter Dark Mode Untuk Peta Leaflet */
-        .dark-map-tiles {
-            filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+        /* Style Khusus Grid Chart */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .chart-title {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+            font-weight: 500;
         }
 
         .form-group { margin-bottom: 20px; }
@@ -138,15 +147,14 @@
             .sidebar.show { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.7); }
             .hero-title { font-size: 28px; text-align: center; }
             .stat-grid { grid-template-columns: 1fr; }
+            .chart-grid { grid-template-columns: 1fr; }
         }
         
-        /* Tambahan agar pin GPS tepat di tengah */
         .custom-pin { display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
-    <!-- Ambient Orbs -->
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
 
@@ -173,7 +181,6 @@
 
         <main class="main-content" onclick="tutupSidebarMobile()">
             
-            <!-- TAB 1: DASHBOARD -->
             <section id="tab-dashboard" class="content-section active">
                 <h1 class="hero-title">Live <strong>Monitoring</strong></h1>
                 
@@ -206,26 +213,31 @@
                     </div>
                 </div>
 
-                <!-- PETA LIVE LOCATION -->
                 <div class="liquid-glass" style="margin-bottom: 30px;">
                     <h3 style="color: #ccff00; font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between;">
                         <span>📍 GPS Live Tracker</span>
-                        <!-- Status Peta akan berubah ketika data internet ESP32 masuk -->
                         <span style="font-size: 12px; color: #888; font-weight: 400;">Koneksi: <span id="map-status" style="color: #ff9f43;">Menunggu ESP32...</span></span>
                     </h3>
                     <div id="map" style="height: 350px; border-radius: 15px; z-index: 1;"></div>
                 </div>
             </section>
 
-            <!-- TAB 2: STATISTIK -->
             <section id="tab-statistik" class="content-section">
                 <h1 class="hero-title">Data <strong>Statistik</strong></h1>
-                <div class="liquid-glass" style="height: 400px; padding-top: 40px;">
-                    <canvas id="grafikSampah"></canvas>
+                
+                <div class="chart-grid">
+                    <div class="liquid-glass">
+                        <h2 class="chart-title">Analisis Komposisi (Radar)</h2>
+                        <div id="radarChart"></div>
+                    </div>
+
+                    <div class="liquid-glass" style="grid-column: 1 / -1;">
+                        <h2 class="chart-title">Tren Volume Sampah (Area Spline)</h2>
+                        <div id="lineChart"></div>
+                    </div>
                 </div>
             </section>
 
-            <!-- TAB 3: SETTINGS -->
             <section id="tab-settings" class="content-section">
                 <div class="liquid-glass" style="max-width: 600px; margin: 0 auto;">
                     <h2 style="margin-bottom: 30px; color: #ccff00; text-align: center;">Profil & Keamanan</h2>
@@ -254,7 +266,6 @@
         </main>
     </div>
 
-    <!-- SCRIPT LOGIKA PROGRAM -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es",
@@ -286,7 +297,6 @@
                     }
                 });
                 
-                // Inisialisasi peta setelah web tampil
                 setTimeout(initMap, 500);
             }
         });
@@ -300,7 +310,6 @@
             elemenNav.classList.add('active');
             tutupSidebarMobile();
             
-            // Fix bug peta mengecil saat pindah tab
             if(namaTab === 'dashboard' && map) {
                 setTimeout(() => map.invalidateSize(), 100);
             }
@@ -350,15 +359,46 @@
             });
         }
 
-        Chart.defaults.color = '#888';
-        Chart.defaults.font.family = "'Poppins', sans-serif";
-        const ctx = document.getElementById('grafikSampah').getContext('2d');
-        let chartSampah = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: ['Logam', 'Plastik', 'Organik'], datasets: [{ label: 'Volume Terkumpul', data: [0, 0, 0], backgroundColor: ['#ccff00', '#4db8ff', '#2ecc71'], borderRadius: 10 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-        });
+        // ================= APEXCHARTS INISIALISASI =================
+        let radarData = [0, 0, 0]; // Array penyimpan data real-time [Logam, Plastik, Organik]
 
+        // 1. Konfigurasi Grafik Radar
+        var radarOptions = {
+            series: [{ name: 'Total Sampah', data: radarData }],
+            chart: { 
+                type: 'radar', 
+                height: 350, 
+                toolbar: { show: false },
+                dropShadow: { enabled: true, blur: 8, left: 1, top: 1, opacity: 0.2 }
+            },
+            labels: ['Logam', 'Plastik', 'Organik'],
+            stroke: { width: 2, colors: ['#ccff00'] },
+            fill: { opacity: 0.4, colors: ['#ccff00'] },
+            markers: { size: 5, colors: ['#0a0c0a'], strokeColors: '#ccff00', strokeWidth: 2 },
+            yaxis: { show: false },
+            xaxis: { labels: { style: { colors: ['#a8b2c1', '#a8b2c1', '#a8b2c1'], fontSize: '13px', fontFamily: 'Poppins' } } },
+            tooltip: { theme: 'dark' }
+        };
+        var radarChart = new ApexCharts(document.querySelector("#radarChart"), radarOptions);
+        radarChart.render();
+
+        // 2. Konfigurasi Grafik Area (Spline)
+        var lineOptions = {
+            series: [{ name: 'Aktivitas Pembuangan', data: [5, 12, 18, 25, 32, 45, 52, 68, 75] }], // Data dummy visualisasi tren
+            chart: { type: 'area', height: 300, toolbar: { show: false }, background: 'transparent' },
+            colors: ['#4db8ff'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
+            grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+            xaxis: { categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9'], labels: { style: { colors: '#a8b2c1', fontFamily: 'Poppins' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: '#a8b2c1', fontFamily: 'Poppins' } } },
+            theme: { mode: 'dark' }
+        };
+        var lineChart = new ApexCharts(document.querySelector("#lineChart"), lineOptions);
+        lineChart.render();
+
+        // ================= FIREBASE REAL-TIME UPDATE =================
         db.ref('/sistem/status_aktif').on('value', (s) => {
             const st = s.val();
             const el = document.getElementById('status-live');
@@ -372,12 +412,16 @@
             }
         });
 
+        // Fungsi Update UI & Grafik Radar
         function updateUI(id, val, index, color) {
+            // Update Lingkaran (Dashboard)
             let percentage = (val / 50) * 100; if(percentage > 100) percentage = 100;
             document.getElementById('circle-'+id).style.background = `conic-gradient(${color} ${percentage}%, rgba(255,255,255,0.05) 0%)`;
             document.getElementById('val-'+id).innerText = val;
-            chartSampah.data.datasets[0].data[index] = val;
-            chartSampah.update();
+            
+            // Update Grafik Radar secara Real-time
+            radarData[index] = val;
+            radarChart.updateSeries([{ name: 'Total Sampah', data: radarData }]);
         }
 
         db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, '#ccff00'));
@@ -389,20 +433,14 @@
         let mapMarker;
 
         function initMap() {
-            // Default Lokasi: Institut Teknologi Kalimantan (ITK) Balikpapan (Lokasi statis awal)
             const defaultLokasi = [-1.149, 116.899]; 
-
             map = L.map('map').setView(defaultLokasi, 16);
 
-            // ==========================================
-            // MENGGUNAKAN TAMPILAN SATELLITE GOOGLE MAPS
-            // ==========================================
             L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
                 attribution: '© Google Maps',
                 maxZoom: 20
             }).addTo(map);
 
-            // Membuat Ikon Kustom agar senada dengan warna Neon
             const customIcon = L.divIcon({
                 className: 'custom-pin',
                 html: `<div style="background-color: #ccff00; width: 20px; height: 20px; border-radius: 50%; box-shadow: 0 0 15px #ccff00; border: 3px solid #101210;"></div>`,
@@ -413,22 +451,14 @@
             mapMarker = L.marker(defaultLokasi, {icon: customIcon}).addTo(map);
             mapMarker.bindPopup("<b style='color:black;'>Menunggu Sinyal ESP32...</b>").openPopup();
 
-            // Mendengarkan perubahan lokasi dari ESP32 via Firebase secara Real-Time
             db.ref('/sistem/lokasi').on('value', (snapshot) => {
                 const lokasi = snapshot.val();
                 if (lokasi && lokasi.lat && lokasi.lng) {
                     const newLatLng = [lokasi.lat, lokasi.lng];
-                    
-                    // Pindahkan titik GPS
                     mapMarker.setLatLng(newLatLng);
-                    
-                    // Update keterangan Pin
                     mapMarker.bindPopup("<b style='color:black;'>Lokasi Real-time Alat</b><br>Berdasarkan Hardcode ESP32").openPopup();
-                    
-                    // Terbang perlahan ke koordinat ESP32
-                    map.flyTo(newLatLng, 18, { animate: true, duration: 2.0 }); // Zoom level dinaikkan ke 18 agar satelit lebih dekat
+                    map.flyTo(newLatLng, 18, { animate: true, duration: 2.0 }); 
 
-                    // Ubah UI Teks Konfirmasi Koneksi
                     const statusEl = document.getElementById('map-status');
                     if(statusEl) {
                         statusEl.innerText = "Satelit Terkunci ✅";
