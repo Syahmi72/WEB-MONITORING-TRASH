@@ -630,7 +630,7 @@
         db.ref('/sensor_plastik/total').on('value', s => updateUI('plastik', s.val()||0, 1, colorPlastik));
         db.ref('/sensor_organik/total').on('value', s => updateUI('organik', s.val()||0, 2, colorOrganik));
 
-        // ======================== 3D MAP LOGIC (Leaflet) ========================
+        // ======================== 3D MAP LOGIC (Google Satelit Hybrid) ========================
         let map;
         let mapMarker;
 
@@ -640,7 +640,8 @@
             const defaultLokasi = [-1.149, 116.899]; 
             map = L.map('map', { zoomControl: false }).setView(defaultLokasi, 16);
 
-            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            // MENGGUNAKAN GOOGLE MAPS SATELLITE HYBRID (Satelit + Lapisan Nama Jalan/Tempat)
+            L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
                 attribution: '© Google Maps',
                 maxZoom: 20
             }).addTo(map);
