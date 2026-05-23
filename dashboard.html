@@ -645,13 +645,14 @@
         function initMap() {
             if(map) return; 
 
+            // Default titik tengah peta
             const defaultLokasi = [-1.149, 116.899]; 
             map = L.map('map', { zoomControl: false }).setView(defaultLokasi, 16);
 
-            // MENGGUNAKAN GOOGLE MAPS SATELLITE HYBRID (Satelit + Lapisan Nama Jalan/Tempat)
-            L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                attribution: '© Google Maps',
-                maxZoom: 20
+            // TILE LAYER ESRI YANG BARU
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri, Maxar, Earthstar Geographics',
+                maxZoom: 19
             }).addTo(map);
             
             L.control.zoom({ position: 'bottomright' }).addTo(map);
