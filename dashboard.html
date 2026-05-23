@@ -19,7 +19,7 @@
         
         :root {
             /* Palet Warna Liquid 3D */
-            --bg-body: #e0e5ec; /* Warna dasar Neumorphic/Glass */
+            --bg-body: #e0e5ec;
             --text-main: #374151;
             --glass-bg: rgba(255, 255, 255, 0.45);
             --glass-border: rgba(255, 255, 255, 0.7);
@@ -89,7 +89,6 @@
         .nav-links { list-style: none; display: flex; flex-direction: column; gap: 12px; flex: 1; }
         .nav-item { padding: 16px 20px; border-radius: 18px; cursor: pointer; color: #6b7280; font-weight: 600; transition: all 0.3s ease; display: flex; align-items: center; gap: 15px; font-size: 14px; position: relative; overflow: hidden;}
         
-        /* Efek Hover Liquid di Nav */
         .nav-item::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transition: 0.5s; }
         .nav-item:hover::before { left: 100%; }
         .nav-item:hover { background: rgba(255,255,255,0.3); color: #1f2937; transform: translateX(5px); }
@@ -128,7 +127,6 @@
             overflow: hidden;
         }
         
-        /* Efek Kilau Kaca 3D */
         .liquid-glass-3d::after {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0) 60%);
@@ -143,7 +141,6 @@
         /* ======================== 3D STAT CARDS & CIRCLES ======================== */
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         
-        /* Card khusus untuk statistik agar terlihat tebal */
         .stat-card-3d {
             display: flex; align-items: center; gap: 20px;
             background: rgba(255,255,255,0.5);
@@ -157,28 +154,25 @@
         .flex-col-center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .stat-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
 
-        /* Lingkaran 3D dengan efek lubang kental */
         .circle-wrap-3d { 
             width: 80px; height: 80px; border-radius: 50%; 
             display: flex; justify-content: center; align-items: center; 
             position: relative; 
-            box-shadow: var(--shadow-out); /* Efek timbul */
+            box-shadow: var(--shadow-out);
             border: 2px solid #fff;
             overflow: hidden;
         }
         
-        /* Bagian dalam lingkaran yang terlihat kental (Liquid) */
         .circle-inner-3d { 
             width: 60px; height: 60px; 
-            background: #fff; /* Warna Neumorphic tekan ke dalam */
+            background: #fff; 
             border-radius: 50%; 
             display: flex; justify-content: center; align-items: center; 
             font-size: 18px; font-weight: 800; 
             z-index: 2; color: #1f2937; 
-            box-shadow: var(--shadow-in); /* Efek lubang ke dalam */
+            box-shadow: var(--shadow-in);
         }
         
-        /* Warna Gradien Liquid Conic 3D */
         .circle-wrap-3d.logam { background: conic-gradient(var(--color-logam) 0%, rgba(255,255,255,0.5) 0%); } 
         .circle-wrap-3d.plastik { background: conic-gradient(var(--color-plastik) 0%, rgba(255,255,255,0.5) 0%); }
         .circle-wrap-3d.organik { background: conic-gradient(var(--color-organik) 0%, rgba(255,255,255,0.5) 0%); }
@@ -192,12 +186,11 @@
             font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
         }
 
-        /* Styling khusus untuk Map agar menyatu dengan tema 3D glass */
         #map { 
             height: 380px; border-radius: 20px; z-index: 1; 
             border: 3px solid #fff; 
             box-shadow: var(--shadow-in); 
-            filter: grayscale(10%) contrast(90%); /* Agar warna peta tidak terlalu tabrakan */
+            filter: grayscale(10%) contrast(90%);
         }
 
         /* ======================== 3D FORMS & INPUTS ======================== */
@@ -205,10 +198,9 @@
         .form-group { margin-bottom: 25px; text-align: left; }
         .form-label { display: block; font-size: 13px; color: #6b7280; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Input Neumorphic/3D tekan ke dalam */
         .form-input-3d { 
             width: 100%; 
-            background: #e6e9ef; /* Warna latar sedikit gelap untuk lubang */
+            background: #e6e9ef; 
             border: 2px solid #fff; 
             color: #1f2937; 
             padding: 18px; 
@@ -223,7 +215,6 @@
             box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1), var(--shadow-out); 
         }
         
-        /* Styling khusus preview foto profile 3D */
         .profile-pic-upload-3d {
             width: 130px; height: 130px; border-radius: 50%; 
             border: 5px solid #fff; margin: 0 auto 15px; overflow: hidden; 
@@ -369,7 +360,7 @@
                         <label class="form-label">Nama Tampilan</label>
                         <input type="text" id="input-nama" class="form-input-3d" placeholder="Masukkan nama baru">
                     </div>
-                    <button class="btn-primary" onclick="simpanNamaDanFoto()" style="margin-bottom: 40px;">Simpan Perubahan Profil</button>
+                    <button class="btn-primary form-input-3d" onclick="simpanNamaDanFoto()" style="margin-bottom: 40px; background: var(--color-primary); color: white; cursor: pointer;">Simpan Perubahan Profil</button>
                     
                     <hr style="border: 0; border-top: 2px solid rgba(0,0,0,0.03); margin-bottom: 40px;">
                     
@@ -378,7 +369,7 @@
                         <label class="form-label">Password Baru Login</label>
                         <input type="password" id="input-password" class="form-input-3d" placeholder="Ketik password baru (min. 6 karakter)">
                     </div>
-                    <button class="btn-primary" onclick="gantiPassword()" style="background: transparent; color: var(--color-danger); border: 2px solid var(--color-danger); box-shadow: none;">Update Password</button>
+                    <button class="btn-primary form-input-3d" onclick="gantiPassword()" style="background: transparent; color: var(--color-danger); border: 2px solid var(--color-danger); cursor: pointer;">Update Password</button>
                 </div>
             </section>
 
@@ -417,7 +408,7 @@
                     }
                 });
                 
-                setTimeout(initMap, 500); // Beri jeda agar container siap
+                setTimeout(initMap, 500); 
             }
         });
 
@@ -431,7 +422,6 @@
             elemenNav.classList.add('active');
             tutupSidebarMobile();
             
-            // Fix Leaflet glitch saat pindah tab
             if(namaTab === 'dashboard' && map) {
                 setTimeout(() => map.invalidateSize(), 100);
             }
@@ -484,13 +474,14 @@
         }
 
         // ======================== 3D CHARTS LOGIC (ApexCharts) ========================
-        let sensorDataRealtime = [0, 0, 0]; // [Logam, Plastik, Organik]
+        let sensorDataRealtime = [0, 0, 0]; 
 
-        // Get CSS Variable Colors
+        // Get CSS Variable Colors dengan aman
         const style = getComputedStyle(document.documentElement);
-        const colorLogam = style.getPropertyValue('--color-logam').trim();
-        const colorPlastik = style.getPropertyValue('--color-plastik').trim();
-        const colorOrganik = style.getPropertyValue('--color-organik').trim();
+        const colorLogam = style.getPropertyValue('--color-logam').trim() || '#f59e0b';
+        const colorPlastik = style.getPropertyValue('--color-plastik').trim() || '#0ea5e9';
+        const colorOrganik = style.getPropertyValue('--color-organik').trim() || '#22c55e';
+        const colorPrimary = '#059669'; // Fix untuk ApexCharts warna total & line chart
 
         // 1. 3D Donut Chart (Komposisi Volume kental)
         var donutOptions = {
@@ -498,7 +489,7 @@
             chart: { type: 'donut', height: 280, background: 'transparent', dropShadow: { enabled: true, top: 2, left: 2, blur: 3, opacity: 0.1 } },
             labels: ['Logam', 'Plastik', 'Organik'],
             colors: [colorLogam, colorPlastik, colorOrganik],
-            stroke: { show: true, colors: '#ffffff', width: 3 }, // Border putih tebal agar seperti kaca
+            stroke: { show: true, colors: '#ffffff', width: 3 }, 
             dataLabels: { 
                 enabled: true, 
                 style: { fontSize: '13px', fontFamily: 'Poppins', fontWeight: 'bold', colors: ['#fff'] },
@@ -512,7 +503,7 @@
                             show: true,
                             name: { color: '#6b7280', fontSize: '14px', fontWeight: 600 },
                             value: { color: '#111827', fontSize: '24px', fontWeight: '800' },
-                            total: { show: true, label: 'Total', color: var(--color-primary), fontWeight: 700 }
+                            total: { show: true, label: 'Total', color: colorPrimary, fontWeight: 700 } 
                         }
                     }
                 }
@@ -527,9 +518,9 @@
         var lineOptions = {
             series: [{ name: 'Aktivitas', data: [10, 25, 20, 40, 35, 55, 50, 70, 65] }],
             chart: { type: 'area', height: 250, toolbar: { show: false }, background: 'transparent', dropShadow: { enabled: true, top: 3, left: 1, blur: 4, opacity: 0.1 } },
-            colors: [var(--color-primary)],
+            colors: [colorPrimary],
             dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 4 }, // Garis tebal
+            stroke: { curve: 'smooth', width: 4 }, 
             fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
             grid: { borderColor: 'rgba(0,0,0,0.03)', strokeDashArray: 4 },
             xaxis: { categories: ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm'], labels: { style: { colors: '#6b7280', fontFamily: 'Poppins' } }, axisBorder: { show: false } },
@@ -541,7 +532,6 @@
 
         // ======================== FIREBASE REAL-TIME LOGIC ========================
         
-        // Update Status Teks Live (Dashboard)
         db.ref('/sistem/status_aktif').on('value', (s) => {
             const st = s.val();
             const el = document.getElementById('status-live');
@@ -555,7 +545,6 @@
             }
         });
 
-        // Update Kartu Analitik (Statistik)
         function updateKartuStatistik() {
             let totalLogam = sensorDataRealtime[0];
             let totalPlastik = sensorDataRealtime[1];
@@ -575,24 +564,19 @@
             document.getElementById('stat-juara').innerText = juara;
         }
 
-        // Fungsi Inti Update UI (Dipanggil setiap ada data Firebase baru)
         function updateUI(id, val, index, color) {
-            // 1. Update Lingkaran 3D timbul (Tab Dashboard)
-            let limit = 50; // Asumsi kapasitas visual penuh
+            let limit = 50; 
             let percentage = (val / limit) * 100; if(percentage > 100) percentage = 100;
             
             document.getElementById('circle-'+id).style.background = `conic-gradient(${color} ${percentage}%, rgba(255,255,255,0.4) 0%)`;
             document.getElementById('val-'+id).innerText = val;
             
-            // 2. Simpan ke Array Global untuk Chart
             sensorDataRealtime[index] = val;
             
-            // 3. Update Chart & Analitik (Tab Statistik)
             donutChart.updateSeries(sensorDataRealtime);
             updateKartuStatistik();
         }
 
-        // Listeners data Firebase Realtime
         db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, colorLogam));
         db.ref('/sensor_plastik/total').on('value', s => updateUI('plastik', s.val()||0, 1, colorPlastik));
         db.ref('/sensor_organik/total').on('value', s => updateUI('organik', s.val()||0, 2, colorOrganik));
@@ -602,12 +586,11 @@
         let mapMarker;
 
         function initMap() {
-            if(map) return; // Cegah inisialisasi ganda
+            if(map) return; 
 
-            const defaultLokasi = [-1.149, 116.899]; // Kampus ITK
+            const defaultLokasi = [-1.149, 116.899]; 
             map = L.map('map', { zoomControl: false }).setView(defaultLokasi, 16);
 
-            // Pake Google Maps Vektor (biar agak terang bersih 3d)
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                 attribution: '© Google Maps',
                 maxZoom: 20
@@ -615,7 +598,6 @@
             
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-            // Custom Pin Alat 3D (Glowing Green)
             const customIcon = L.divIcon({
                 className: 'custom-pin',
                 html: `<div style="background-color: var(--color-primary); width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 0 15px var(--color-primary); border: 4px solid #ffffff;"></div>`,
@@ -626,7 +608,6 @@
             mapMarker = L.marker(defaultLokasi, {icon: customIcon}).addTo(map);
             mapMarker.bindPopup("<b style='color:#1f2937;'>Smart Bin ITK</b><br>Menunggu koordinat...").openPopup();
 
-            // Listen Koordinat GPS dari Firebase
             db.ref('/sistem/lokasi').on('value', (snapshot) => {
                 const lokasi = snapshot.val();
                 if (lokasi && lokasi.lat && lokasi.lng) {
@@ -635,11 +616,10 @@
                     mapMarker.bindPopup("<b style='color:#1f2937;'>Lokasi Alat Live</b>").openPopup();
                     map.flyTo(newLatLng, 18, { animate: true, duration: 2.0 }); 
 
-                    // Update Status Koneksi GPS
                     const statusEl = document.getElementById('map-status');
                     if(statusEl) {
                         statusEl.innerText = "Terhubung ✅";
-                        statusEl.style.color = var(--color-primary);
+                        statusEl.style.color = colorPrimary;
                     }
                 }
             });
