@@ -14,6 +14,51 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* ======================== FOOTER ELEKTRON 3D ======================== */
+        .footer-3d {
+            margin-top: 50px;
+            margin-bottom: 20px;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 25px;
+            box-shadow: var(--shadow-in), 3px 3px 10px rgba(163, 177, 198, 0.2);
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        .footer-3d:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-out);
+            background: #fff;
+        }
+        .footer-3d span {
+            color: var(--color-primary);
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 3px;
+        }
+        .footer-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--color-primary);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+        }
         /* ======================== CORE 3D LIQUID GLASS THEME ======================== */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; outline: none; }
         
@@ -372,6 +417,10 @@
                     <button class="btn-primary form-input-3d" onclick="gantiPassword()" style="background: transparent; color: var(--color-danger); border: 2px solid var(--color-danger); cursor: pointer;">Update Password</button>
                 </div>
             </section>
+            <div class="footer-3d">
+                <div class="footer-dot"></div>
+                &copy; 2026 <span>ELEKTRON</span> &nbsp;|&nbsp; Smart Waste Innovation
+            </div>
 
         </main>
     </div>
