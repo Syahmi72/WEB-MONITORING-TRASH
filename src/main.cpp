@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <FirebaseESP32.h>
+#include <ESP32Servo.h> 
 
 // === KONFIGURASI WIFI ===
 #define WIFI_SSID "Sami"
@@ -11,41 +12,59 @@
 #define FIREBASE_AUTH "kqGzNtFg7WN8ZAx5N5uqLaga6WBaSklVmjDa5Dfe"
 
 // === PIN SENSOR ===
-#define PIN_INDUKTIF 4    // D4: Sensor Logam
-#define PIN_KAPASITIF 19  // D19: Sensor Plastik
-#define PIN_IR 22         // D22: Sensor Organik (Kembali Ditambahkan)
+#define PIN_INDUKTIF 33   
+#define PIN_KAPASITIF 19  
+#define PIN_IR 22         
+
+// === PIN SERVO ===
+#define PIN_SERVO_LOGAM 13    
+#define PIN_SERVO_PLASTIK 12  
+#define PIN_SERVO_ORGANIK 14  
 
 // === VARIABEL GLOBAL ===
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-int totalLogam = 0;     bool logamTerlihat = false;
-int totalPlastik = 0;    bool plastikTerlihat = false;
-int totalOrganik = 0;    bool organikTerlihat = false;
+Servo servoLogam;
+Servo servoPlastik;
+Servo servoOrganik;
 
-int kapasitifStable = 0;    // Penstabil sensor plastik
-String statusTerakhir = ""; // Gembok data agar tidak spam ke Firebase
+int totalLogam = 0;     bool logamTerlihat = false;
+int totalPlastik = 0;   bool plastikTerlihat = false;
+int totalOrganik = 0;   bool organikTerlihat = false;
+
+int kapasitifStable = 0;    
+String statusTerakhir = ""; 
 
 void setup() {
   Serial.begin(115200);
   delay(1000); 
 
   Serial.println("\n\n=================================");
-  Serial.println("   MONITORING TEMPAT SAMPAH V2");
+  Serial.println("   MONITORING TEMPAT SAMPAH V6");
+  Serial.println("         (FINAL CONFIG)");
   Serial.println("=================================");
 
-  // Setup pin dengan INPUT_PULLUP agar sinyal terkunci dan tidak mengambang
   pinMode(PIN_INDUKTIF, INPUT_PULLUP);
-  pinMode(PIN_KAPASITIF, INPUT_PULLUP); // Diubah ke PULLUP karena tipenya Normally Closed (NC)
+  pinMode(PIN_KAPASITIF, INPUT_PULLUP); 
   pinMode(PIN_IR, INPUT_PULLUP);
   
   pinMode(2, OUTPUT); 
   digitalWrite(2, LOW);
 
-  Serial.println("✓ Semua pin sensor (Logam, Plastik, Organik) siap.");
+  // Inisialisasi Servo
+  servoLogam.attach(PIN_SERVO_LOGAM);
+  servoPlastik.attach(PIN_SERVO_PLASTIK);
+  servoOrganik.attach(PIN_SERVO_ORGANIK);
 
-  // Setup WiFi
+  // Posisi awal diam rapat
+  servoLogam.write(0);   // Servo 180 derajat ke titik 0
+  servoPlastik.write(0);  // Servo 180 derajat ke titik 0
+  servoOrganik.write(90); // Servo 360 derajat ngerem/diam
+
+  Serial.println("✓ Semua pin Sensor & 3 Servo siap.");
+
   Serial.print("🔄 Menghubungkan WiFi...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
@@ -60,35 +79,34 @@ void setup() {
     Serial.println(" ✓ WiFi TERHUBUNG!");
     Serial.print("IP: "); Serial.println(WiFi.localIP());
 
-    // Setup Firebase
     Serial.print("🔄 Menghubungkan ke Firebase...");
     config.host = FIREBASE_HOST;
     config.signer.tokens.legacy_token = FIREBASE_AUTH;
+
+    fbdo.setBSSLBufferSize(1024, 1024);
+    fbdo.setResponseSize(1024);
+
     Firebase.begin(&config, &auth);
     Firebase.reconnectWiFi(true);
     Serial.println(" ✓ Firebase Terkoneksi!");
-
   } else {
-    Serial.println(" ✗ WiFi GAGAL! Berjalan dalam mode offline.");
+    Serial.println(" ✗ WiFi GAGAL! Berjalan offline.");
   }
+  
+  delay(1500); 
   Serial.println("=================================\n");
 }
 
 void loop() {
-  // 1. Baca nilai digital dari masing-masing pin
   int bacaSensorInduktif = digitalRead(PIN_INDUKTIF);
   int bacaSensorKapasitif = digitalRead(PIN_KAPASITIF);
   int bacaSensorIR = digitalRead(PIN_IR);
 
-  // 2. Terjemahkan Logika Deteksi
+  // Logika pembacaan sensor
   bool adaLogam = (bacaSensorInduktif == LOW);
   bool adaOrganik = (bacaSensorIR == LOW);
-  
-  // PERBAIKAN UTAMA: Karena fisik sensor kapasitif terbalik (lampu mati saat didekatkan benda),
-  // maka kondisi "ada plastik" justru dibaca saat bernilai LOW.
-  bool rawPlastik = (bacaSensorKapasitif == LOW); 
+  bool rawPlastik = (bacaSensorKapasitif == LOW); // Kapasitif tipe NC
 
-  // 3. Sistem Debounce Penstabil Sensor Kapasitif
   if (rawPlastik) {
     if (kapasitifStable < 3) kapasitifStable++;
   } else {
@@ -96,77 +114,93 @@ void loop() {
   }
   bool adaPlastik = (kapasitifStable >= 3);
 
-  // Nyalakan LED internal jika salah satu sensor mendeteksi objek
   digitalWrite(2, (adaLogam || adaPlastik || adaOrganik) ? HIGH : LOW);
 
   bool adaSampahBaru = false; 
 
-  // 4. Perhitungan Total Sampah Logam
+  // Hitung Logam
   if (adaLogam && !logamTerlihat) {
-    totalLogam++;
-    logamTerlihat = true;
-    adaSampahBaru = true;
-  } else if (!adaLogam) {
-    logamTerlihat = false;
-  }
+    totalLogam++; logamTerlihat = true; adaSampahBaru = true;
+  } else if (!adaLogam) { logamTerlihat = false; }
 
-  // 5. Perhitungan Total Sampah Plastik
+  // Hitung Plastik
   if (adaPlastik && !plastikTerlihat) {
-    totalPlastik++;
-    plastikTerlihat = true;
-    adaSampahBaru = true;
-  } else if (!adaPlastik) {
-    plastikTerlihat = false;
-  }
+    totalPlastik++; plastikTerlihat = true; adaSampahBaru = true;
+  } else if (!adaPlastik) { plastikTerlihat = false; }
 
-  // 6. Perhitungan Total Sampah Organik
+  // Hitung Organik
   if (adaOrganik && !organikTerlihat) {
-    totalOrganik++;
-    organikTerlihat = true;
-    adaSampahBaru = true;
-  } else if (!adaOrganik) {
-    organikTerlihat = false;
-  }
+    totalOrganik++; organikTerlihat = true; adaSampahBaru = true;
+  } else if (!adaOrganik) { organikTerlihat = false; }
 
-  // 7. Penentuan Teks Status untuk Web Dashboard
+  // Tentukan Status Teks
   String status;
   if (adaLogam) status = "Logam Terdeteksi!";
   else if (adaPlastik) status = "Plastik Terdeteksi!";
   else if (adaOrganik) status = "Organik Terdeteksi!";
   else status = "Menunggu Sampah...";
 
-  // 8. SISTEM FILTER ANTI-SPAM (Penyembuh Bug Hang/Delay)
-  // Data hanya diproses dan dikirim jika status berubah atau hitungan bertambah
+  // Kirim data ke Serial & Firebase
   if (status != statusTerakhir || adaSampahBaru) {
-    
-    // Tampilkan di Serial Monitor laptop
     Serial.print("Induktif: "); Serial.print(bacaSensorInduktif);
     Serial.print(" | Kapasitif: "); Serial.print(bacaSensorKapasitif);
     Serial.print(" | IR: "); Serial.print(bacaSensorIR);
-    Serial.print(" | Status Terbaru: "); Serial.print(status);
-
-    if (adaSampahBaru) {
-      Serial.print(" -> [UPDATE COUNTER]");
-    }
+    Serial.print(" | Status: "); Serial.print(status);
+    if (adaSampahBaru) Serial.print(" -> [COUNTER UP]");
     Serial.println();
 
-    // Kirim Data Real-time ke Firebase (Akan langsung merespon ke Web)
     if (WiFi.status() == WL_CONNECTED && Firebase.ready()) {
-      
-      // Update status jika teks berubah
       if (status != statusTerakhir) {
-        Firebase.setString(fbdo, "/sistem/status_aktif", status);
-        statusTerakhir = status; // Kunci status sekarang
+        Firebase.setStringAsync(fbdo, "/sistem/status_aktif", status);
+        statusTerakhir = status; 
       }
-      
-      // Update nilai counter jika ada sampah masuk
       if (adaSampahBaru) {
-        Firebase.setInt(fbdo, "/sensor_induktif/total", totalLogam);
-        Firebase.setInt(fbdo, "/sensor_plastik/total", totalPlastik);
-        Firebase.setInt(fbdo, "/sensor_organik/total", totalOrganik);
+        Firebase.setIntAsync(fbdo, "/sensor_induktif/total", totalLogam);
+        Firebase.setIntAsync(fbdo, "/sensor_plastik/total", totalPlastik);
+        Firebase.setIntAsync(fbdo, "/sensor_organik/total", totalOrganik);
       }
     }
   }
 
-  delay(150); // Jeda aman loop agar ESP32 tetap responsif
+// =======================================================
+  // ⚙️ LOGIKA BUKA-TUTUP SERVO MASING-MASING BILIK
+  // =======================================================
+  
+  if (adaLogam) {
+    Serial.println("⚙️ Membuka Tutup LOGAM (Servo 180)...");
+    servoLogam.write(90);  
+    delay(3000);           
+    servoLogam.write(0);   
+    Serial.println("⚙️ Menutup Tutup LOGAM.");
+  } 
+  
+  else if (adaPlastik) {
+    Serial.println("⚙️ Membuka Tutup PLASTIK (Servo 360)...");
+    servoPlastik.write(180); // Putar untuk membuka
+    delay(800);              // Lamanya proses membuka (silakan naikkan/turunkan angka ini)
+    servoPlastik.write(90);  // NGEREM / DIAM dalam posisi terbuka
+    
+    delay(3000);             // Tahan selama 3 detik agar sampah plastik masuk
+    
+    Serial.println("⚙️ Menutup Tutup PLASTIK (Servo 360)...");
+    servoPlastik.write(0);   // Putar balik untuk menutup
+    delay(800);              // Waktunya harus sama dengan durasi membuka di atas
+    servoPlastik.write(90);  // NGEREM / DIAM dalam posisi tertutup rapat
+  } 
+  
+  else if (adaOrganik) {
+    Serial.println("⚙️ Membuka Tutup ORGANIK (Servo 360)...");
+    servoOrganik.write(180); 
+    delay(500);              
+    servoOrganik.write(90);  
+    
+    delay(3000);             
+    
+    Serial.println("⚙️ Menutup Tutup ORGANIK (Servo 360)...");
+    servoOrganik.write(0);   
+    delay(500);              
+    servoOrganik.write(90);  
+  }
+
+  delay(150); 
 }
