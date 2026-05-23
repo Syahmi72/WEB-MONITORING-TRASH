@@ -59,15 +59,15 @@
             70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
         }
-        /* ======================== CORE 3D LIQUID GLASS THEME ======================== */
+        /* ======================== Perbaikan Desain 3D Liquid Glass ======================== */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; outline: none; }
         
         :root {
-            /* Palet Warna Liquid 3D */
-            --bg-body: #e0e5ec;
-            --text-main: #374151;
-            --glass-bg: rgba(255, 255, 255, 0.45);
-            --glass-border: rgba(255, 255, 255, 0.7);
+            /* Perubahan Warna Latar Belakang & Teks */
+            --bg-body: #d5dae2; /* Abu-abu netral, lebih dalam agar highlights putih terlihat */
+            --text-main: #2d3436;
+            --glass-bg: rgba(255, 255, 255, 0.35); /* Opasitas lebih rendah biar kedalaman terlihat */
+            --glass-border: rgba(255, 255, 255, 0.8);
             
             /* Warna Liquid */
             --color-logam: #f59e0b;
@@ -76,15 +76,15 @@
             --color-primary: #059669;
             --color-danger: #e11d48;
             
-            /* 3D Shadows & Highlights */
-            --shadow-out: 6px 6px 16px rgba(163, 177, 198, 0.6), -6px -6px 16px rgba(255, 255, 255, 0.8);
-            --shadow-in: inset 2px 2px 5px rgba(163, 177, 198, 0.5), inset -3px -3px 7px rgba(255, 255, 255, 0.7);
-            --glass-specular: inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -1px 1px rgba(0,0,0,0.03);
+            /* Perkuatan 3D Shadows & Highlights (Timboel Sekali!) */
+            --shadow-out: 12px 12px 30px rgba(163, 177, 198, 0.6), -12px -12px 30px rgba(255, 255, 255, 0.9); /* Bayangan luar putih & gelap yang jauh lebih kuat */
+            --shadow-in: inset 5px 5px 15px rgba(163, 177, 198, 0.5), inset -8px -8px 20px rgba(255, 255, 255, 0.9); /* Efek lubang kaca padat yang lebih dalam */
+            --glass-specular: inset 0 3px 2px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(0,0,0,0.03); /* Garis kilau kaca dipertebal di atas */
         }
 
         body { 
             background-color: var(--bg-body);
-            background: linear-gradient(135deg, #e0e5ec 0%, #cdffd8 100%);
+            background: linear-gradient(135deg, #d5dae2 0%, #eef2f3 100%);
             background-attachment: fixed;
             color: var(--text-main); 
             min-height: 100vh; 
@@ -163,7 +163,7 @@
             background: var(--glass-bg);
             backdrop-filter: blur(25px); 
             -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border); 
+            border: 2px solid var(--glass-border); /* Tepi kaca dipertebal */
             border-radius: 30px; 
             padding: 30px; 
             box-shadow: var(--shadow-out), var(--glass-specular);
@@ -188,9 +188,9 @@
         
         .stat-card-3d {
             display: flex; align-items: center; gap: 20px;
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.3);
             border-radius: 25px; padding: 25px;
-            box-shadow: var(--shadow-in), 3px 3px 10px rgba(163, 177, 198, 0.2);
+            box-shadow: var(--shadow-in); /* Bayangan dalam lubang kental dipertebal */
             border: 1px solid rgba(255,255,255,0.4);
             transition: 0.3s;
         }
@@ -200,22 +200,30 @@
         .stat-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
 
         .circle-wrap-3d { 
-            width: 80px; height: 80px; border-radius: 50%; 
+            width: 90px; height: 90px; border-radius: 50%; /* Pertebal lingkaran */
             display: flex; justify-content: center; align-items: center; 
             position: relative; 
-            box-shadow: var(--shadow-out);
-            border: 2px solid #fff;
+            box-shadow: var(--shadow-out); /* Timboel timbul keluar */
+            border: 4px solid #fff; /* Tepi putih tebal seolah tabung kaca */
             overflow: hidden;
         }
         
         .circle-inner-3d { 
-            width: 60px; height: 60px; 
-            background: #fff; 
+            width: 70px; height: 70px; 
+            background: #fff; /* Warna Neumorphic tekan ke dalam */
             border-radius: 50%; 
             display: flex; justify-content: center; align-items: center; 
-            font-size: 18px; font-weight: 800; 
+            font-size: 20px; font-weight: 800; 
             z-index: 2; color: #1f2937; 
-            box-shadow: var(--shadow-in);
+            box-shadow: var(--shadow-in); /* Lubang dalam dipertebal */
+            /* Tambahan efek Cairan kental (Liquid) di dalam lubang */
+            position: relative;
+        }
+
+        .circle-inner-3d::after {
+            content: ''; position: absolute; top: -10px; left: -10px; width: calc(100% + 20px); height: calc(100% + 20px);
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.05) 100%);
+            border-radius: 50%; z-index: 1; pointer-events: none;
         }
         
         .circle-wrap-3d.logam { background: conic-gradient(var(--color-logam) 0%, rgba(255,255,255,0.5) 0%); } 
