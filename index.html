@@ -2,30 +2,35 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ITK SmartWaste - Pemilah Sampah AI</title>
     
-    <!-- Konfigurasi PWA (Aplikasi HP) -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#101210">
     <link rel="apple-touch-icon" href="/icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Library 3D Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <style>
-        /* ================= DEKORASI DASAR ================= */
+        /* ================= DEKORASI DASAR & KUNCIAN NATIVE APP ================= */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         
         body { 
             margin: 0; 
-            overflow-x: hidden; 
             background-color: #0a0c0a;
             color: #ffffff;
-            /* Biarkan browser menangani scroll secara natural agar bisa refresh */
+            
+            /* PENGUNCI LAYAR HP (ANTI ZOOM & ANTI GESER) */
+            width: 100vw;
+            max-width: 100vw;
+            overflow-x: hidden; /* Cegah geser kanan-kiri */
+            overscroll-behavior-y: none; /* Matikan efek mantul (pull-to-refresh) browser */
+            touch-action: pan-y; /* Hanya izinkan scroll atas-bawah */
+            -webkit-text-size-adjust: 100%; /* Cegah iOS membesarkan font otomatis */
         }
 
         /* Container untuk Canvas 3D */
@@ -184,14 +189,11 @@
 </head>
 <body>
 
-    <!-- Container untuk 3D -->
     <div id="canvas-container"></div>
     <div class="overlay-gradient"></div>
 
-    <!-- UI Layer -->
     <div class="ui-layer">
         
-        <!-- Header & Tombol Login Kiri Atas -->
         <header>
             <a href="login.html" class="btn-login">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
@@ -200,14 +202,12 @@
             <div style="font-weight: 700; letter-spacing: 1px; color: #fff;">ITK <span style="color: #ccff00;">WASTE</span></div>
         </header>
 
-        <!-- Penjelasan Alat -->
         <div class="content-wrap">
             <div class="info-box">
                 <h1>Masa Depan<br><strong>Pengelolaan Sampah</strong></h1>
                 <p>ITK SmartWaste adalah sistem cerdas berbasis IoT yang mampu mengenali dan memilah sampah secara otomatis ke dalam kategori yang tepat untuk menjaga lingkungan kampus tetap hijau.</p>
                 
                 <div class="feature-list">
-                    <!-- 1. Sensor Induktif (Logam) -->
                     <div class="feature-item">
                         <div style="font-size: 24px;">⚙️</div>
                         <div>
@@ -216,7 +216,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. Sensor Kapasitif (Plastik) -->
                     <div class="feature-item">
                         <div style="font-size: 24px;">💧</div>
                         <div>
@@ -225,7 +224,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. Sensor Infrared (Organik/Daun) -->
                     <div class="feature-item">
                         <div style="font-size: 24px;">🌿</div>
                         <div>
@@ -234,7 +232,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. Real-Time Status -->
                     <div class="feature-item">
                         <div style="font-size: 24px;">📡</div>
                         <div>
@@ -252,7 +249,6 @@
         </div>
     </div>
 
-    <!-- Pendaftaran Service Worker PWA -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -263,7 +259,6 @@
         }
     </script>
 
-    <!-- SCRIPT 3D INTERAKTIF -->
     <script>
         // 1. Setup Scene, Camera, Renderer
         const scene = new THREE.Scene();
