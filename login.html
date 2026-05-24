@@ -2,12 +2,16 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <title>Login - ITK SmartWaste</title>
-    <!-- Font -->
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tambahan Library 3D Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
@@ -26,6 +30,14 @@
             justify-content: center;
             align-items: center;
             padding: 20px; 
+            
+            /* 2. PERBAIKAN KUNCIAN CSS (ANTI GESER) */
+            width: 100vw;
+            max-width: 100vw;
+            overflow-x: hidden;
+            overscroll-behavior-y: none;
+            touch-action: pan-y;
+            -webkit-text-size-adjust: 100%;
         }
 
         /* ================= BUNGKUSAN LOGIN (SPLIT SCREEN) ================= */
@@ -80,13 +92,11 @@
 
         .brand-content { z-index: 1; display: flex; flex-direction: column; align-items: center; }
         
-        /* WADAH UNTUK ANIMASI 3D (MENGGANTIKAN LOGO LAMA) */
         #logo-3d-container { 
             width: 180px; 
             height: 180px; 
             margin-bottom: 10px; 
             position: relative;
-            /* Efek tatakan/podium tipis untuk 3D */
             background: radial-gradient(circle at bottom, rgba(204,255,0,0.1) 0%, transparent 70%);
             border-radius: 50%;
         }
@@ -138,6 +148,7 @@
             margin-top: 10px;
         }
         .btn-login:hover { box-shadow: 0 0 20px rgba(204,255,0,0.4); transform: translateY(-2px); }
+        .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
         #error-msg { 
             background: rgba(255, 71, 87, 0.1); 
@@ -165,26 +176,22 @@
             .login-left { padding: 40px 20px; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
             .login-right { padding: 40px 25px; flex: 1; justify-content: center; }
             .glowing-orb { width: 200px; height: 200px; }
-            #logo-3d-container { width: 140px; height: 140px; } /* Diperkecil sedikit di HP */
+            #logo-3d-container { width: 140px; height: 140px; } 
         }
     </style>
 </head>
 <body>
 
     <div class="login-container">
-        <!-- Bagian Kiri (Branding & Animasi 3D) -->
         <div class="login-left">
             <div class="glowing-orb"></div>
             <div class="brand-content">
-                <!-- WADAH 3D REPLACEMENT LOGO -->
                 <div id="logo-3d-container"></div>
-                
                 <div class="logo-text">ITK <span>SMARTWASTE</span></div>
                 <p class="brand-desc">Sistem Monitoring Cerdas Pemilah Sampah Berbasis AI dan IoT Terintegrasi untuk Area Kampus ITK Balikpapan.</p>
             </div>
         </div>
 
-        <!-- Bagian Kanan (Form) -->
         <div class="login-right">
             <h2>Welcome Back</h2>
             <p>Silakan masuk ke panel kontrol admin.</p>
@@ -206,19 +213,14 @@
         </div>
     </div>
 
-    <!-- Script Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-    <!-- SCRIPT 3D MINIATUR TONG SAMPAH -->
     <script>
-        // 1. Inisialisasi Scene 3D di dalam kotak logo
         const container3D = document.getElementById('logo-3d-container');
         const scene = new THREE.Scene();
-        
-        // Kamera dibuat pas dengan ukuran kotak
         const camera = new THREE.PerspectiveCamera(50, container3D.clientWidth / container3D.clientHeight, 0.1, 100);
-        camera.position.z = 12; // Jarak pandang
+        camera.position.z = 12; 
         camera.position.y = 2;
         
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -226,22 +228,17 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         container3D.appendChild(renderer.domElement);
 
-        // 2. Membuat Objek Smart Bin Mini
         const binGroup = new THREE.Group();
-
-        // Badan Tong (Hitam Metalik)
         const bodyGeo = new THREE.CylinderGeometry(2.5, 2.2, 7, 32);
         const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1c1a, metalness: 0.8, roughness: 0.3 });
         const body = new THREE.Mesh(bodyGeo, bodyMat);
         binGroup.add(body);
 
-        // Kerangka Pemindai Neon (Wireframe Hijau)
         const wireMat = new THREE.MeshBasicMaterial({ color: 0xccff00, wireframe: true, transparent: true, opacity: 0.2 });
         const wireMesh = new THREE.Mesh(bodyGeo, wireMat);
         wireMesh.scale.set(1.03, 1.03, 1.03); 
         binGroup.add(wireMesh);
 
-        // Cincin Sensor di atas
         const ringGeo = new THREE.TorusGeometry(2.6, 0.1, 8, 50);
         const ringMat = new THREE.MeshBasicMaterial({ color: 0xccff00 });
         const ring = new THREE.Mesh(ringGeo, ringMat);
@@ -251,7 +248,6 @@
 
         scene.add(binGroup);
 
-        // 3. Pencahayaan
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
         
@@ -259,21 +255,14 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        // 4. Animasi Berputar
         function animate3D() {
             requestAnimationFrame(animate3D);
-            
-            // Putar tong sampahnya
             binGroup.rotation.y += 0.015;
-            
-            // Efek cincin pemindai naik turun
             ring.position.y = 3.5 + Math.sin(Date.now() * 0.005) * 0.2;
-
             renderer.render(scene, camera);
         }
         animate3D();
 
-        // Responsif jika layar berubah ukuran
         window.addEventListener('resize', () => {
             if(container3D) {
                 camera.aspect = container3D.clientWidth / container3D.clientHeight;
@@ -283,7 +272,6 @@
         });
     </script>
 
-    <!-- SCRIPT LOGIKA FIREBASE -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDKlzNjFgaUwR3ehHq4upfANXVj0Mcc8Es", 
@@ -297,12 +285,12 @@
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-
         const auth = firebase.auth();
 
         auth.onAuthStateChanged((user) => {
             if (user) {
-                window.location.replace("/dashboard.html");
+                // 3. PERBAIKAN PATH (Hapus garis miring di depan biar tidak error di GitHub)
+                window.location.replace("dashboard.html");
             }
         });
 
@@ -312,16 +300,19 @@
             const errorMsg = document.getElementById('error-msg');
             const btnSubmit = document.getElementById('btn-submit');
 
+            // Ubah state tombol
             btnSubmit.innerText = "Memverifikasi...";
-            btnSubmit.style.opacity = "0.7";
+            btnSubmit.disabled = true; // Matikan tombol sementara
 
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    window.location.href = "/dashboard.html";
+                    // 3. PERBAIKAN PATH
+                    window.location.href = "dashboard.html";
                 })
                 .catch((error) => {
+                    // KEMBALIKAN TOMBOL JIKA GAGAL
                     btnSubmit.innerText = "Login ke Dashboard";
-                    btnSubmit.style.opacity = "1";
+                    btnSubmit.disabled = false;
                     
                     errorMsg.style.display = "block";
                     if(error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -331,6 +322,20 @@
                     }
                 });
         }
+    </script>
+
+    <script>
+        document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+        document.addEventListener('touchmove', function (e) { 
+            if (e.touches.length > 1) { e.preventDefault(); } 
+        }, { passive: false });
+        
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (e) {
+            let now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) { e.preventDefault(); }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </body>
 </html>

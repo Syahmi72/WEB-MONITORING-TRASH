@@ -1,13 +1,15 @@
-const CACHE_NAME = 'elektron-app-v1';
+const CACHE_NAME = 'elektron-app-v2'; // Naikkan versi agar cache lama otomatis terhapus
 const urlsToCache = [
   './',
   './index.html',
+  './dashboard.html',
   './login.html',
   './icon.png'
 ];
 
-// Install Service Worker
+// Install & langsung aktifkan versi baru
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
@@ -15,14 +17,27 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetch API (Bypass Firebase agar sensor tetap Real-time)
+// Hapus cache versi lama (Pembersih otomatis)
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(cache => cache !== CACHE_NAME).map(cache => caches.delete(cache))
+      );
+    })
+  );
+});
+
+// Network First Strategy (Utamakan internet biar Firebase lancar jaya)
 self.addEventListener('fetch', event => {
-  if (event.request.url.includes('firebase') || event.request.url.includes('google')) {
-    return; // Jangan cache data sensor, biarkan live!
+  // Biarkan Firebase dan CDN memuat langsung dari internet
+  if (event.request.url.includes('firestore') || event.request.url.includes('firebase') || event.request.url.includes('google')) {
+    return;
   }
+  
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
