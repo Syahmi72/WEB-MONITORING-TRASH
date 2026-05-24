@@ -1,14 +1,13 @@
 {
-  "name": "ITK SmartWaste Dashboard",
-  "short_name": "SmartWaste",
-  "start_url": "/index.html",
+  "name": "ELEKTRON SmartWaste ITK",
+  "short_name": "ELEKTRON",
+  "start_url": "./dashboard.html", 
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#101210",
-  "theme_color": "#ccff00",
+  "background_color": "#e0e5ec",
+  "theme_color": "#059669",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon.png", 
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
