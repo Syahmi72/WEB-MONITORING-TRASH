@@ -178,9 +178,48 @@
             .glowing-orb { width: 200px; height: 200px; }
             #logo-3d-container { width: 140px; height: 140px; } 
         }
+
+        /* ================= SPLASH SCREEN INTRO ================= */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #0a0c0a; /* Sama dengan warna tema */
+            z-index: 99999; /* Pastikan selalu paling atas */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
+        }
+        
+        .splash-ring {
+            width: 60px; height: 60px;
+            border: 3px solid rgba(204, 255, 0, 0.1);
+            border-top: 3px solid #ccff00;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            animation: spinFast 1s linear infinite;
+        }
+
+        .splash-text {
+            font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 2px;
+        }
+        .splash-text span { color: #ccff00; }
+        .splash-sub {
+            font-size: 11px; color: #888; letter-spacing: 2px; margin-top: 8px; text-transform: uppercase;
+            animation: pulseFade 1.5s infinite;
+        }
+
+        @keyframes spinFast { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulseFade { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
+    <div id="splash-screen">
+        <div class="splash-ring"></div>
+        <div class="splash-text">ITK <span>SMARTWASTE</span></div>
+        <div class="splash-sub">Memuat Sistem IoT...</div>
+    </div>
 
     <div class="login-container">
         <div class="login-left">
@@ -336,6 +375,18 @@
             if (now - lastTouchEnd <= 300) { e.preventDefault(); }
             lastTouchEnd = now;
         }, false);
+    </script>
+
+    <script>
+        // Tunggu seluruh halaman (termasuk 3D) selesai dimuat
+        window.addEventListener('load', () => {
+            // Beri jeda 1.5 detik biar intro-nya sempat dinikmati user
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                splash.style.visibility = 'hidden';
+            }, 1500); 
+        });
     </script>
 </body>
 </html>
