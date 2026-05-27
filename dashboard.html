@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ITK Smart Waste - Liquid Glass 3D Dashboard</title>
+    <title>ITK Smart Waste - Ultimate Dashboard</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -18,20 +18,21 @@
         #auth-guard {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #e0e5ec; /* Warna background dasbor */
+            background: #e0e5ec;
             z-index: 999999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.5s ease;
         }
         .guard-spinner {
             width: 40px; height: 40px;
-            border: 4px solid #059669; /* Hijau primary */
+            border: 4px solid #059669; 
             border-top: 4px solid transparent;
             border-radius: 50%;
             animation: spinGuard 1s linear infinite;
             margin-bottom: 15px;
         }
         @keyframes spinGuard { 100% { transform: rotate(360deg); } }
+
         /* ======================== FOOTER ELEKTRON 3D ======================== */
         .footer-3d {
             margin-top: 50px;
@@ -77,27 +78,25 @@
             70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
         }
-        /* ======================== Perbaikan Desain 3D Liquid Glass ======================== */
+
+        /* ======================== DESAIN 3D LIQUID GLASS (LAPTOP) ======================== */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; outline: none; }
         
         :root {
-            /* Perubahan Warna Latar Belakang & Teks */
-            --bg-body: #d5dae2; /* Abu-abu netral, lebih dalam agar highlights putih terlihat */
+            --bg-body: #d5dae2; 
             --text-main: #2d3436;
-            --glass-bg: rgba(255, 255, 255, 0.35); /* Opasitas lebih rendah biar kedalaman terlihat */
+            --glass-bg: rgba(255, 255, 255, 0.35); 
             --glass-border: rgba(255, 255, 255, 0.8);
             
-            /* Warna Liquid */
             --color-logam: #f59e0b;
             --color-plastik: #0ea5e9;
             --color-organik: #22c55e;
             --color-primary: #059669;
             --color-danger: #e11d48;
             
-            /* Perkuatan 3D Shadows & Highlights (Timboel Sekali!) */
-            --shadow-out: 12px 12px 30px rgba(163, 177, 198, 0.6), -12px -12px 30px rgba(255, 255, 255, 0.9); /* Bayangan luar putih & gelap yang jauh lebih kuat */
-            --shadow-in: inset 5px 5px 15px rgba(163, 177, 198, 0.5), inset -8px -8px 20px rgba(255, 255, 255, 0.9); /* Efek lubang kaca padat yang lebih dalam */
-            --glass-specular: inset 0 3px 2px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(0,0,0,0.03); /* Garis kilau kaca dipertebal di atas */
+            --shadow-out: 12px 12px 30px rgba(163, 177, 198, 0.6), -12px -12px 30px rgba(255, 255, 255, 0.9); 
+            --shadow-in: inset 5px 5px 15px rgba(163, 177, 198, 0.5), inset -8px -8px 20px rgba(255, 255, 255, 0.9); 
+            --glass-specular: inset 0 3px 2px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(0,0,0,0.03); 
         }
 
         body { 
@@ -110,7 +109,6 @@
             position: relative;
         }
 
-        /* Ambient Orbs untuk Efek Kedalaman 3D */
         .ambient-orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: 0; animation: float 15s infinite ease-in-out alternate; }
         .orb-1 { top: -10%; left: 10%; width: 400px; height: 400px; background: rgba(5, 150, 105, 0.15); }
         .orb-2 { bottom: -10%; right: 5%; width: 500px; height: 500px; background: rgba(14, 165, 233, 0.1); animation-delay: -7s; }
@@ -122,7 +120,6 @@
 
         .app-layout { display: flex; min-height: 100vh; width: 100%; position: relative; z-index: 1; padding: 20px; gap: 20px; }
         
-        /* ======================== 3D GLASS SIDEBAR ======================== */
         .sidebar {
             width: 280px;
             background: var(--glass-bg);
@@ -164,9 +161,7 @@
         .btn-logout { margin-top: auto; background: rgba(225, 29, 72, 0.1); color: var(--color-danger); border: 2px solid var(--color-danger); padding: 14px; border-radius: 18px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;}
         .btn-logout:hover { background: var(--color-danger); color: white; box-shadow: 0 6px 20px rgba(225, 29, 72, 0.3); transform: translateY(-3px); }
 
-        /* ======================== MAIN CONTENT AREA ======================== */
         .main-content { flex: 1; }
-        
         .mobile-topbar { display: none; }
         .bottom-nav { display: none; }
         
@@ -174,7 +169,6 @@
         .content-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* ======================== LIQUID GLASS 3D CONTAINER ======================== */
         .liquid-glass-3d { 
             background: var(--glass-bg);
             backdrop-filter: blur(25px); 
@@ -199,7 +193,6 @@
         .hero-title { font-size: 36px; font-weight: 300; line-height: 1.2; margin-bottom: 30px; letter-spacing: -1px; color: #1f2937; }
         .hero-title strong { font-weight: 800; color: var(--color-primary); text-shadow: 0 2px 4px rgba(5, 150, 105, 0.1); }
 
-        /* ======================== 3D STAT CARDS & CIRCLES ======================== */
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         
         .stat-card-3d {
@@ -245,7 +238,6 @@
         .circle-wrap-3d.plastik { background: conic-gradient(var(--color-plastik) 0%, rgba(255,255,255,0.5) 0%); }
         .circle-wrap-3d.organik { background: conic-gradient(var(--color-organik) 0%, rgba(255,255,255,0.5) 0%); }
 
-        /* ======================== 3D CHARTS & MAP ======================== */
         .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         
         .chart-title {
@@ -261,7 +253,6 @@
             filter: grayscale(10%) contrast(90%);
         }
 
-        /* ======================== 3D FORMS & INPUTS ======================== */
         .form-container-3d { max-width: 650px; margin: 0 auto; padding: 10px; }
         .form-group { margin-bottom: 25px; text-align: left; }
         .form-label { display: block; font-size: 13px; color: #6b7280; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
@@ -314,11 +305,13 @@
             .ambient-orb { display: none !important; }
             .footer-3d { display: none !important; }
             
-            /* 3. AKTIFKAN & ATUR HEADER HP */
+            /* 3. AKTIFKAN & ATUR HEADER HP (FIX BATAS ATAS/JAM PAKE ENV) */
             .mobile-topbar { 
                 display: flex !important; position: fixed; width: 100%; top: 0; left: 0;
                 background: rgba(10, 12, 10, 0.8); backdrop-filter: blur(10px);
-                padding: 20px; justify-content: space-between; align-items: center; z-index: 100;
+                /* Tambahan env(safe-area) agar tidak nabrak jam HP */
+                padding: calc(15px + env(safe-area-inset-top)) 20px 15px 20px !important; 
+                justify-content: space-between; align-items: center; z-index: 100;
                 border-bottom: 1px solid rgba(255,255,255,0.05);
             }
             .mobile-topbar .logo { color: #fff; font-size: 18px; display: flex; align-items: center; gap: 5px; font-weight: bold;}
@@ -327,8 +320,8 @@
             .status-dot-mobile { width: 10px; height: 10px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: blink 1.5s infinite; }
             @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-            /* 4. ATUR JARAK KONTEN HP */
-            .app-layout { padding: 90px 15px 100px 15px !important; display: block; margin: 0; }
+            /* 4. ATUR JARAK KONTEN HP (Disesuaikan dengan batas atas baru dan nav bawah melayang) */
+            .app-layout { padding: calc(80px + env(safe-area-inset-top)) 15px 120px 15px !important; display: block; margin: 0; }
             .liquid-glass-3d { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.05) !important; box-shadow: none !important; padding: 20px !important; border-radius: 20px !important; }
             
             /* 5. UBAH BENTUK KARTU SENSOR */
@@ -339,7 +332,7 @@
                 align-items: center; border: 1px solid rgba(255,255,255,0.08) !important; 
                 text-align: left;
             }
-            .stat-card-3d div:first-child h3 { color: inherit; } /* Biarkan warna sensor tetap nyala */
+            .stat-card-3d div:first-child h3 { color: inherit; } 
             .stat-card-3d div:first-child p { color: #888 !important; }
             
             .circle-wrap-3d { width: 50px !important; height: 50px !important; border-width: 2px !important; }
@@ -354,16 +347,45 @@
             .profile-pic-upload-3d { border-color: var(--color-primary) !important; background: transparent !important; }
             .btn-secondary-3d { background: rgba(255,255,255,0.1) !important; color: #fff !important; border: none !important; }
 
-            /* 6. AKTIFKAN BOTTOM NAVIGATION BAR */
+            /* 6. AKTIFKAN BOTTOM NAVIGATION BAR (FLOATING 3D GLASS) */
             .bottom-nav {
-                display: flex !important; position: fixed; bottom: 0; left: 0; width: 100%;
-                background: rgba(10, 12, 10, 0.95); backdrop-filter: blur(15px);
-                justify-content: space-around; padding: 15px 0 25px 0; z-index: 100;
-                border-top: 1px solid rgba(255,255,255,0.05);
+                display: flex !important; 
+                position: fixed; 
+                /* Dibuat melayang dari bawah dengan env */
+                bottom: calc(15px + env(safe-area-inset-bottom)); 
+                left: 5%; width: 90%; 
+                border-radius: 25px; /* Bentuk kapsul */
+                
+                background: rgba(20, 22, 20, 0.65) !important; 
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                justify-content: space-between; padding: 8px 10px; z-index: 100;
+                
+                /* Efek Kaca 3D Timbul */
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 3px 5px rgba(255,255,255,0.1), inset 0 -3px 5px rgba(0,0,0,0.4) !important;
             }
-            .nav-item-mobile { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #666; font-size: 11px; text-decoration: none; font-weight: 600; cursor: pointer; transition: 0.3s; }
-            .nav-item-mobile.active { color: var(--color-primary); }
-            .nav-item-mobile svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+            
+            /* Tombol Default */
+            .nav-item-mobile { 
+                display: flex; flex-direction: column; align-items: center; gap: 4px; 
+                color: #777; font-size: 10px; text-decoration: none; font-weight: 600; 
+                cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+                padding: 10px 20px; border-radius: 18px; width: 33%;
+            }
+            .nav-item-mobile svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; transition: 0.3s; }
+            
+            /* Tombol Aktif (Efek 3D Tenggelam & Glowing) */
+            .nav-item-mobile.active { 
+                color: var(--color-primary); 
+                background: rgba(204, 255, 0, 0.08); /* Background hijau neon transparan */
+                /* Efek deboss (kaca masuk ke dalam) */
+                box-shadow: inset 2px 2px 6px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(255,255,255,0.05);
+                transform: translateY(1px);
+            }
+            .nav-item-mobile.active svg {
+                filter: drop-shadow(0px 0px 5px rgba(204, 255, 0, 0.6)); /* Ikon menyala */
+            }
         }
     </style>
 </head>
@@ -502,6 +524,7 @@
                     <button class="btn-primary form-input-3d" onclick="logoutDashboard()" style="margin-top: 20px; background: rgba(225, 29, 72, 0.1); color: var(--color-danger); border: 2px solid var(--color-danger); cursor: pointer; display: block;">Keluar (Logout)</button>
                 </div>
             </section>
+            
             <div class="footer-3d">
                 <div class="footer-dot"></div>
                 &copy; 2026 <span>ELEKTRON</span> &nbsp;|&nbsp; Smart Waste Innovation
@@ -576,17 +599,16 @@
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.getElementById('tab-' + namaTab).classList.add('active');
             
-            // Hapus status aktif dari semua menu (Laptop & HP)
+            // Hapus status aktif dari semua menu
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.querySelectorAll('.nav-item-mobile').forEach(nav => nav.classList.remove('active'));
             
-            // Aktifkan menu laptop yang di-klik
+            // Aktifkan menu laptop
             if (elemenNav.classList.contains('nav-item')) {
                 elemenNav.classList.add('active');
-                // Sinkronkan juga nav bawah HP kalau diklik dari laptop (biar aman aja)
                 document.querySelectorAll('.nav-item-mobile')[indeksBawahNav].classList.add('active');
             } 
-            // Aktifkan menu HP yang di-klik
+            // Aktifkan menu HP
             else if (elemenNav.classList.contains('nav-item-mobile')) {
                 elemenNav.classList.add('active');
                 document.querySelectorAll('.nav-item')[indeksBawahNav].classList.add('active');
