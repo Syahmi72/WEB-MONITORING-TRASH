@@ -615,18 +615,41 @@
         db.ref('/sistem/status_aktif').on('value', (s) => {
             const st = s.val();
             const el = document.getElementById('status-live');
-            
-            // 1. Matikan semua kartu (Reset ke mode IDLE) - Khusus Mobile
+    
+            // Reset dulu semua kartu ke IDLE
             ['logam', 'plastik', 'organik'].forEach(type => {
-                let card = document.getElementById('card-' + type);
-                if(card) card.classList.remove('active-' + type);
-                
-                let pill = document.getElementById('pill-' + type);
-                if(pill) pill.innerText = 'IDLE';
-                
-                let desc = document.getElementById('desc-' + type);
-                if(desc) { desc.innerText = 'Menunggu sampah masuk'; desc.style.color = '#777'; }
+                document.getElementById('card-' + type).classList.remove('active-' + type);
+                document.getElementById('pill-' + type).innerText = 'IDLE';
+                document.getElementById('desc-' + type).innerText = 'Menunggu sampah masuk';
+                document.getElementById('desc-' + type).style.color = '#777';
             });
+
+        if(st && st !== "Menunggu Sampah...") {
+            el.innerText = st;
+            let text = st.toLowerCase();
+        
+            // Deteksi berdasarkan kata kunci yang dikirim ESP32
+            if(text.includes('logam')) { 
+                el.style.color = colorLogam; 
+                triggerCard('logam'); 
+                // Tambahan: teks deskripsi khusus
+                document.getElementById('desc-logam').innerText = 'Sampah Logam sedang diproses...';
+            }
+            else if(text.includes('plastik')) { 
+                el.style.color = colorPlastik; 
+                triggerCard('plastik'); 
+                document.getElementById('desc-plastik').innerText = 'Sampah Plastik sedang diproses...';
+            }
+            else if(text.includes('organik')) { 
+                el.style.color = colorOrganik; 
+                triggerCard('organik'); 
+                document.getElementById('desc-organik').innerText = 'Sampah Organik sedang diproses...';
+            }
+        } else {
+            el.innerText = 'Menunggu Sampah...';
+            el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff';
+        }
+    });
 
             // 2. Nyalakan Teks (Laptop) dan Kartu (Mobile) saat mendeteksi sampah
             if(st && st !== "" && st !== "Menunggu Sampah...") {
@@ -641,7 +664,6 @@
                 el.innerText = 'Menunggu Sampah...';
                 el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff';
             }
-        });
 
         // Trigger khusus menyalakan Border & Spinner di Mobile PWA
         function triggerCard(type) {

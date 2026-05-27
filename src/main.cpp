@@ -4,8 +4,8 @@
 #include <ESP32Servo.h> 
 
 // === KONFIGURASI WIFI ===
-#define WIFI_SSID "ITK-LAB2.X"
-#define WIFI_PASSWORD "K@mpusM3rdeka!"
+#define WIFI_SSID "Sami"
+#define WIFI_PASSWORD "Kualisami29"
 
 // === KONFIGURASI FIREBASE ===
 #define FIREBASE_HOST "monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -157,45 +157,57 @@ void loop() {
     }
   }
 
-  // =======================================================
-  // ⚙️ LOGIKA BUKA-TUTUP SERVO BERDASARKAN TIPE HARDWARE
+// =======================================================
+  // ⚙️ LOGIKA BUKA-TUTUP SERVO DENGAN UPDATE STATUS PWA
   // =======================================================
   
   if (adaLogam) {
-    Serial.println("⚙️ Membuka Tutup LOGAM (Tipe 180)...");
-    servoLogam.write(180);  // Buka maksimal 
+    Serial.println("⚙️ Membuka Tutup LOGAM...");
+    servoLogam.write(180);
     delay(3000);           
-    servoLogam.write(0);    // Tutup rapat
-    Serial.println("⚙️ Menutup Tutup LOGAM.");
-
+    servoLogam.write(0);
+    
+    // UPDATE STATUS KE PWA
+    Firebase.setStringAsync(fbdo, "/sistem/status_aktif", "Sampah Logam Masuk");
+    Serial.println("⚙️ Status: Sampah Logam Masuk");
+    delay(2000); // Tahan status ini selama 2 detik agar PWA sempat membaca
+    
+    statusTerakhir = "Menunggu Sampah..."; // Paksa reset agar PWA kembali ke kondisi awal
+    Firebase.setStringAsync(fbdo, "/sistem/status_aktif", statusTerakhir);
+    
     while (digitalRead(PIN_INDUKTIF) == TRIGGER_INDUKTIF) { delay(100); }
   } 
   
   else if (adaPlastik) {
-    Serial.println("⚙️ Membuka Tutup PLASTIK (Tipe 360)...");
-    servoPlastik.write(180); // Muter ke kanan
-    delay(800);              
-    servoPlastik.write(90);  // NGEREM
+    Serial.println("⚙️ Membuka Tutup PLASTIK...");
+    servoPlastik.write(180); delay(800); servoPlastik.write(90);
+    delay(3000);             
+    servoPlastik.write(0);   delay(800); servoPlastik.write(90);
     
-    delay(3000);             // Tahan 3 detik
+    // UPDATE STATUS KE PWA
+    Firebase.setStringAsync(fbdo, "/sistem/status_aktif", "Sampah Plastik Masuk");
+    Serial.println("⚙️ Status: Sampah Plastik Masuk");
+    delay(2000);
     
-    Serial.println("⚙️ Menutup Tutup PLASTIK.");
-    servoPlastik.write(0);   // Muter balik
-    delay(800);              
-    servoPlastik.write(90);  // NGEREM
+    statusTerakhir = "Menunggu Sampah...";
+    Firebase.setStringAsync(fbdo, "/sistem/status_aktif", statusTerakhir);
     
     while (digitalRead(PIN_KAPASITIF) == TRIGGER_KAPASITIF) { delay(100); }
   } 
   
   else if (adaOrganik) {
-    Serial.println("⚙️ Membuka Tutup ORGANIK (Tipe 180)...");
-    servoOrganik.write(180); // Buka maksimal
+    Serial.println("⚙️ Membuka Tutup ORGANIK...");
+    servoOrganik.write(180);
     delay(3000);             
-    servoOrganik.write(0);   // Tutup rapat
-    Serial.println("⚙️ Menutup Tutup ORGANIK.");
+    servoOrganik.write(0);
+    
+    // UPDATE STATUS KE PWA
+    Firebase.setStringAsync(fbdo, "/sistem/status_aktif", "Sampah Organik Masuk");
+    Serial.println("⚙️ Status: Sampah Organik Masuk");
+    delay(2000);
+    
+    statusTerakhir = "Menunggu Sampah...";
+    Firebase.setStringAsync(fbdo, "/sistem/status_aktif", statusTerakhir);
 
     while (digitalRead(PIN_IR) == TRIGGER_IR) { delay(100); }
   }
-
-  delay(50);
-}
