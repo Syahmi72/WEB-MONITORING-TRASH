@@ -188,6 +188,20 @@
     </style>
 </head>
 <body>
+    <div id="layar-loading" style="position: fixed; width: 100vw; height: 100vh; background: #ffffff; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; top: 0; left: 0;">
+    
+        <img src="logo-512.png" style="width: 120px; animation: pulse 1.5s infinite;" alt="Logo">
+    
+        <p style="margin-top: 20px; font-family: sans-serif; color: #333;">Memuat Data...</p>
+
+        <style>
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.1); opacity: 0.7; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        </style>
+    </div>
 
     <div id="canvas-container"></div>
     <div class="overlay-gradient"></div>
@@ -387,6 +401,22 @@
             if (now - lastTouchEnd <= 300) { e.preventDefault(); }
             lastTouchEnd = now;
         }, false);
+    </script>
+
+    <script>
+        window.addEventListener('load', () => {
+            // Kasih delay 1 detik (1000ms) biar logo sempat berdenyut
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('layar-loading');
+                if(loadingScreen) {
+                    loadingScreen.style.transition = "opacity 0.5s ease"; // Efek memudar
+                    loadingScreen.style.opacity = "0"; // Bikin transparan
+                    
+                    // Hapus elemen dari layar setelah setengah detik memudar
+                    setTimeout(() => loadingScreen.remove(), 500); 
+                }
+            }, 1000); 
+        });
     </script>
 </body>
 </html>

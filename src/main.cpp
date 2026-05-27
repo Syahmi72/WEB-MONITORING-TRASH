@@ -4,22 +4,29 @@
 #include <ESP32Servo.h> 
 
 // === KONFIGURASI WIFI ===
-#define WIFI_SSID "Sami"
-#define WIFI_PASSWORD "Kualisami29"
+#define WIFI_SSID "ITK-LAB2.X"
+#define WIFI_PASSWORD "K@mpusM3rdeka!"
 
 // === KONFIGURASI FIREBASE ===
 #define FIREBASE_HOST "monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app"
 #define FIREBASE_AUTH "kqGzNtFg7WN8ZAx5N5uqLaga6WBaSklVmjDa5Dfe"
 
 // === PIN SENSOR ===
-#define PIN_INDUKTIF 33   
-#define PIN_KAPASITIF 19  
-#define PIN_IR 22         
+#define PIN_INDUKTIF 19   // Sensor Logam
+#define PIN_KAPASITIF 15  // Sensor Plastik
+#define PIN_IR 22         // Sensor Organik
 
 // === PIN SERVO ===
-#define PIN_SERVO_LOGAM 13    
-#define PIN_SERVO_PLASTIK 12  
-#define PIN_SERVO_ORGANIK 14  
+#define PIN_SERVO_LOGAM 25    // Pindah dari 13 ke 25
+#define PIN_SERVO_PLASTIK 26  // Pindah dari 12 ke 26
+#define PIN_SERVO_ORGANIK 14  // Tetap di 14 (Aman)
+
+// =======================================================
+// ⚙️ SETTING TRIGGER SENSOR (LOGIKA DIBALIK)
+// =======================================================
+#define TRIGGER_INDUKTIF LOW    
+#define TRIGGER_KAPASITIF HIGH  // UBAH JADI HIGH KARENA SENSOR TIPE NPN-NC (NORMALLY CLOSED)
+#define TRIGGER_IR LOW          
 
 // === VARIABEL GLOBAL ===
 FirebaseData fbdo;
@@ -34,16 +41,16 @@ int totalLogam = 0;     bool logamTerlihat = false;
 int totalPlastik = 0;   bool plastikTerlihat = false;
 int totalOrganik = 0;   bool organikTerlihat = false;
 
-int kapasitifStable = 0;    
 String statusTerakhir = ""; 
+unsigned long waktuDebugTerakhir = 0; 
 
 void setup() {
   Serial.begin(115200);
   delay(1000); 
 
   Serial.println("\n\n=================================");
-  Serial.println("   MONITORING TEMPAT SAMPAH V6");
-  Serial.println("         (FINAL CONFIG)");
+  Serial.println("   MONITORING TEMPAT SAMPAH V8");
+  Serial.println("    (LOGIKA NPN-NC FIXED)");
   Serial.println("=================================");
 
   pinMode(PIN_INDUKTIF, INPUT_PULLUP);
@@ -53,15 +60,19 @@ void setup() {
   pinMode(2, OUTPUT); 
   digitalWrite(2, LOW);
 
-  // Inisialisasi Servo
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+
   servoLogam.attach(PIN_SERVO_LOGAM);
   servoPlastik.attach(PIN_SERVO_PLASTIK);
   servoOrganik.attach(PIN_SERVO_ORGANIK);
 
-  // Posisi awal diam rapat
-  servoLogam.write(0);   // Servo 180 derajat ke titik 0
-  servoPlastik.write(0);  // Servo 180 derajat ke titik 0
-  servoOrganik.write(90); // Servo 360 derajat ngerem/diam
+  // Posisi Awal 
+  servoLogam.write(0);    // Tipe 180 -> Tutup rapat di 0
+  servoPlastik.write(90); // TIPE 360 -> WAJIB 90 AGAR NGEREM DIAM
+  servoOrganik.write(0);  // Tipe 180 -> Tutup rapat di 0
 
   Serial.println("✓ Semua pin Sensor & 3 Servo siap.");
 
@@ -102,53 +113,37 @@ void loop() {
   int bacaSensorKapasitif = digitalRead(PIN_KAPASITIF);
   int bacaSensorIR = digitalRead(PIN_IR);
 
-  // Logika pembacaan sensor
-  bool adaLogam = (bacaSensorInduktif == LOW);
-  bool adaOrganik = (bacaSensorIR == LOW);
-  bool rawPlastik = (bacaSensorKapasitif == LOW); // Kapasitif tipe NC
-
-  if (rawPlastik) {
-    if (kapasitifStable < 3) kapasitifStable++;
-  } else {
-    if (kapasitifStable > 0) kapasitifStable--;
+  // RADAR DEBUG (Muncul di Serial Monitor setiap 1 detik)
+  if (millis() - waktuDebugTerakhir > 1000) {
+    Serial.printf("🔍 RADAR -> Induktif: %d | Kapasitif: %d | IR: %d\n", bacaSensorInduktif, bacaSensorKapasitif, bacaSensorIR);
+    waktuDebugTerakhir = millis();
   }
-  bool adaPlastik = (kapasitifStable >= 3);
+
+  bool adaLogam = (bacaSensorInduktif == TRIGGER_INDUKTIF);
+  bool adaPlastik = (bacaSensorKapasitif == TRIGGER_KAPASITIF);
+  bool adaOrganik = (bacaSensorIR == TRIGGER_IR);
 
   digitalWrite(2, (adaLogam || adaPlastik || adaOrganik) ? HIGH : LOW);
-
   bool adaSampahBaru = false; 
 
-  // Hitung Logam
-  if (adaLogam && !logamTerlihat) {
-    totalLogam++; logamTerlihat = true; adaSampahBaru = true;
-  } else if (!adaLogam) { logamTerlihat = false; }
+  if (adaLogam && !logamTerlihat) { totalLogam++; logamTerlihat = true; adaSampahBaru = true; } 
+  else if (!adaLogam) { logamTerlihat = false; }
 
-  // Hitung Plastik
-  if (adaPlastik && !plastikTerlihat) {
-    totalPlastik++; plastikTerlihat = true; adaSampahBaru = true;
-  } else if (!adaPlastik) { plastikTerlihat = false; }
+  if (adaPlastik && !plastikTerlihat) { totalPlastik++; plastikTerlihat = true; adaSampahBaru = true; } 
+  else if (!adaPlastik) { plastikTerlihat = false; }
 
-  // Hitung Organik
-  if (adaOrganik && !organikTerlihat) {
-    totalOrganik++; organikTerlihat = true; adaSampahBaru = true;
-  } else if (!adaOrganik) { organikTerlihat = false; }
+  if (adaOrganik && !organikTerlihat) { totalOrganik++; organikTerlihat = true; adaSampahBaru = true; } 
+  else if (!adaOrganik) { organikTerlihat = false; }
 
-  // Tentukan Status Teks
   String status;
   if (adaLogam) status = "Logam Terdeteksi!";
   else if (adaPlastik) status = "Plastik Terdeteksi!";
   else if (adaOrganik) status = "Organik Terdeteksi!";
   else status = "Menunggu Sampah...";
 
-  // Kirim data ke Serial & Firebase
   if (status != statusTerakhir || adaSampahBaru) {
-    Serial.print("Induktif: "); Serial.print(bacaSensorInduktif);
-    Serial.print(" | Kapasitif: "); Serial.print(bacaSensorKapasitif);
-    Serial.print(" | IR: "); Serial.print(bacaSensorIR);
-    Serial.print(" | Status: "); Serial.print(status);
-    if (adaSampahBaru) Serial.print(" -> [COUNTER UP]");
-    Serial.println();
-
+    Serial.println("🚀 [UPDATE] Status: " + status);
+    
     if (WiFi.status() == WL_CONNECTED && Firebase.ready()) {
       if (status != statusTerakhir) {
         Firebase.setStringAsync(fbdo, "/sistem/status_aktif", status);
@@ -162,45 +157,45 @@ void loop() {
     }
   }
 
-// =======================================================
-  // ⚙️ LOGIKA BUKA-TUTUP SERVO MASING-MASING BILIK
+  // =======================================================
+  // ⚙️ LOGIKA BUKA-TUTUP SERVO BERDASARKAN TIPE HARDWARE
   // =======================================================
   
   if (adaLogam) {
-    Serial.println("⚙️ Membuka Tutup LOGAM (Servo 180)...");
-    servoLogam.write(90);  
+    Serial.println("⚙️ Membuka Tutup LOGAM (Tipe 180)...");
+    servoLogam.write(180);  // Buka maksimal 
     delay(3000);           
-    servoLogam.write(0);   
+    servoLogam.write(0);    // Tutup rapat
     Serial.println("⚙️ Menutup Tutup LOGAM.");
+
+    while (digitalRead(PIN_INDUKTIF) == TRIGGER_INDUKTIF) { delay(100); }
   } 
   
   else if (adaPlastik) {
-    Serial.println("⚙️ Membuka Tutup PLASTIK (Servo 360)...");
-    servoPlastik.write(180); // Putar untuk membuka
-    delay(800);              // Lamanya proses membuka (silakan naikkan/turunkan angka ini)
-    servoPlastik.write(90);  // NGEREM / DIAM dalam posisi terbuka
+    Serial.println("⚙️ Membuka Tutup PLASTIK (Tipe 360)...");
+    servoPlastik.write(180); // Muter ke kanan
+    delay(800);              
+    servoPlastik.write(90);  // NGEREM
     
-    delay(3000);             // Tahan selama 3 detik agar sampah plastik masuk
+    delay(3000);             // Tahan 3 detik
     
-    Serial.println("⚙️ Menutup Tutup PLASTIK (Servo 360)...");
-    servoPlastik.write(0);   // Putar balik untuk menutup
-    delay(800);              // Waktunya harus sama dengan durasi membuka di atas
-    servoPlastik.write(90);  // NGEREM / DIAM dalam posisi tertutup rapat
+    Serial.println("⚙️ Menutup Tutup PLASTIK.");
+    servoPlastik.write(0);   // Muter balik
+    delay(800);              
+    servoPlastik.write(90);  // NGEREM
+    
+    while (digitalRead(PIN_KAPASITIF) == TRIGGER_KAPASITIF) { delay(100); }
   } 
   
   else if (adaOrganik) {
-    Serial.println("⚙️ Membuka Tutup ORGANIK (Servo 360)...");
-    servoOrganik.write(180); 
-    delay(500);              
-    servoOrganik.write(90);  
-    
+    Serial.println("⚙️ Membuka Tutup ORGANIK (Tipe 180)...");
+    servoOrganik.write(180); // Buka maksimal
     delay(3000);             
-    
-    Serial.println("⚙️ Menutup Tutup ORGANIK (Servo 360)...");
-    servoOrganik.write(0);   
-    delay(500);              
-    servoOrganik.write(90);  
+    servoOrganik.write(0);   // Tutup rapat
+    Serial.println("⚙️ Menutup Tutup ORGANIK.");
+
+    while (digitalRead(PIN_IR) == TRIGGER_IR) { delay(100); }
   }
 
-  delay(150); 
+  delay(50);
 }
