@@ -320,46 +320,46 @@
             .status-dot-mobile { width: 10px; height: 10px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: blink 1.5s infinite; }
             @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-            /* 4. ATUR JARAK KONTEN HP (JURUS TEMBAK LANGSUNG KE TAB STATISTIK) */
+            /* 4. ATUR JARAK KONTEN HP AGAR BISA DI-SCROLL MELEWATI MENU BAWAH */
             .app-layout { 
-                padding: calc(80px + env(safe-area-inset-top)) 15px 0px 15px !important; 
+                padding: calc(80px + env(safe-area-inset-top)) 15px calc(150px + env(safe-area-inset-bottom)) 15px !important; 
                 display: block; margin: 0; 
             }
+            .liquid-glass-3d { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.05) !important; box-shadow: none !important; padding: 20px !important; border-radius: 20px !important; }
             
-            /* Paksa lantai tambahan setebal 180px di SETIAP lembar tab, termasuk Statistik */
-            .content-section { 
-                padding-bottom: calc(180px + env(safe-area-inset-bottom)) !important; 
-            }
-            
-            .liquid-glass-3d { 
-                background: rgba(255,255,255,0.03) !important; 
-                border-color: rgba(255,255,255,0.05) !important; 
-                box-shadow: none !important; 
-                padding: 20px !important; border-radius: 20px !important; 
-            }
-            /* 5. UBAH BENTUK KARTU SENSOR */
+            /* 5. UBAH BENTUK KARTU SENSOR & FIX GRAFIK KEPOTONG */
             .stat-grid { display: flex !important; flex-direction: column; gap: 15px; }
+            
+            /* Aturan warna umum kartu 3D di HP */
             .stat-card-3d { 
-                flex-direction: row; justify-content: space-between; padding: 15px 20px !important; 
-                background: rgba(255,255,255,0.03) !important; border-radius: 20px; 
-                align-items: center; border: 1px solid rgba(255,255,255,0.08) !important; 
+                background: rgba(255,255,255,0.03) !important; 
+                border-radius: 20px; 
+                border: 1px solid rgba(255,255,255,0.08) !important; 
+            }
+            
+            /* Khusus kartu sensor (dibikin menyamping ke kanan) */
+            .stat-grid .stat-card-3d {
+                flex-direction: row !important; 
+                justify-content: space-between !important; 
+                align-items: center !important;
+                padding: 15px 20px !important; 
                 text-align: left;
             }
             .stat-card-3d div:first-child h3 { color: inherit; } 
             .stat-card-3d div:first-child p { color: #888 !important; }
+
+            /* KHUSUS KARTU GRAFIK (Dikembalikan wujud aslinya memanjang ke bawah agar tidak kepotong) */
+            .stat-card-3d.flex-col-center {
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 25px 15px !important;
+                min-height: 300px; /* Garansi ruang extra untuk ApexCharts */
+            }
             
             .circle-wrap-3d { width: 50px !important; height: 50px !important; border-width: 2px !important; }
             .circle-inner-3d { width: 40px !important; height: 40px !important; font-size: 14px !important; background: #111 !important; color: #fff !important; }
-
-            .hero-title { font-size: 24px !important; text-align: center; }
-            .stat-grid-2 { grid-template-columns: 1fr; gap: 15px; }
-            .chart-grid { grid-template-columns: 1fr; gap: 15px; }
-            #status-live { color: #fff !important; }
             
-            .form-input-3d { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1) !important; color: #fff !important; }
-            .profile-pic-upload-3d { border-color: var(--color-primary) !important; background: transparent !important; }
-            .btn-secondary-3d { background: rgba(255,255,255,0.1) !important; color: #fff !important; border: none !important; }
-
             /* 6. AKTIFKAN BOTTOM NAVIGATION BAR (FLOATING 3D GLASS) */
             .bottom-nav {
                 display: flex !important; 
