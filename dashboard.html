@@ -350,12 +350,15 @@
 
             /* KHUSUS KARTU GRAFIK (Dikembalikan wujud aslinya & diperlebar) */
             .stat-card-3d.flex-col-center {
-                display: block !important; /* Paksa jadi kotak normal, hilangkan efek menciut */
+                display: block !important; 
                 padding: 20px 15px !important;
                 min-height: 320px; 
                 width: 100% !important;
                 text-align: left;
             }
+            
+            /* PENGAMAN GRAFIK AGAR TIDAK HILANG */
+            #lineChart, #donutChart { width: 100% !important; min-height: 250px; }
             
             .circle-wrap-3d { width: 50px !important; height: 50px !important; border-width: 2px !important; }
             .circle-inner-3d { width: 40px !important; height: 40px !important; font-size: 14px !important; background: #111 !important; color: #fff !important; }
@@ -790,6 +793,39 @@
                     if(statusEl) { statusEl.innerText = "Terhubung ✅"; statusEl.style.color = colorPrimary; }
                 }
             });
+        }
+
+        function pindahTab(namaTab, elemenNav, indeksBawahNav) {
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById('tab-' + namaTab).classList.add('active');
+            
+            // Hapus status aktif dari semua menu
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.nav-item-mobile').forEach(nav => nav.classList.remove('active'));
+            
+            // Aktifkan menu laptop
+            if (elemenNav.classList.contains('nav-item')) {
+                elemenNav.classList.add('active');
+                document.querySelectorAll('.nav-item-mobile')[indeksBawahNav].classList.add('active');
+            } 
+            // Aktifkan menu HP
+            else if (elemenNav.classList.contains('nav-item-mobile')) {
+                elemenNav.classList.add('active');
+                document.querySelectorAll('.nav-item')[indeksBawahNav].classList.add('active');
+            }
+            
+            // FIX PETA (DASHBOARD)
+            if(namaTab === 'dashboard' && map) { 
+                setTimeout(() => map.invalidateSize(), 100); 
+            }
+            
+            // JURUS FIX GRAFIK HILANG (STATISTIK)
+            if(namaTab === 'statistik') {
+                // Senggol ApexCharts supaya dia sadar halamannya sudah terbuka
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            }
         }
     </script>
 </body>
