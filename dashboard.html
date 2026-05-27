@@ -708,6 +708,8 @@
             document.getElementById('stat-juara').innerText = juara;
         }
 
+        let chartUpdateTimer;
+
         // FUNGSI INI SUDAH DIPERBAIKI (Ditambah 'colorHex' biar grafik tidak error)
         function updateUI(id, val, index, colorHex) {
             // 1. Update angka & cairan tabung (Khusus Laptop)
@@ -723,9 +725,15 @@
             
             // 2. Update Grafik Donut & Total Statistik (HP & Laptop)
             sensorDataRealtime[index] = val;
-            donutChart.updateSeries(sensorDataRealtime);
             updateKartuStatistik();
         }
+
+        clearTimeout(chartUpdateTimer);
+            chartUpdateTimer = setTimeout(() => {
+                if(donutChart) {
+                    donutChart.updateSeries(sensorDataRealtime);
+                }
+            }, 350);
 
         // PEMANGGILAN FIREBASE SUDAH AMAN (Ada 4 Parameter Termasuk Warna)
         db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, colorLogam));
