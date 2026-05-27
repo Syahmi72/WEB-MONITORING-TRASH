@@ -142,8 +142,8 @@ void loop() {
   else status = "Menunggu Sampah...";
 
   if (status != statusTerakhir || adaSampahBaru) {
-    Serial.println("🚀 [UPDATE] Status: " + status);
-    
+    Serial.println("🚀 [UPDATE] Status: ");
+    Serial.println(status);
     if (WiFi.status() == WL_CONNECTED && Firebase.ready()) {
       if (status != statusTerakhir) {
         Firebase.setStringAsync(fbdo, "/sistem/status_aktif", status);
