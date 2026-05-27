@@ -320,11 +320,22 @@
             .status-dot-mobile { width: 10px; height: 10px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: blink 1.5s infinite; }
             @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-            /* 4. ATUR JARAK KONTEN HP (Disesuaikan agar bisa di-scroll melewati menu bawah) */
+            /* 4. ATUR JARAK KONTEN HP (JURUS TEMBAK LANGSUNG KE TAB STATISTIK) */
             .app-layout { 
-                /* Padding: Atas, Kanan, Bawah (Ditambah jadi 150px), Kiri */
-                padding: calc(80px + env(safe-area-inset-top)) 15px calc(150px + env(safe-area-inset-bottom)) 15px !important; 
+                padding: calc(80px + env(safe-area-inset-top)) 15px 0px 15px !important; 
                 display: block; margin: 0; 
+            }
+            
+            /* Paksa lantai tambahan setebal 180px di SETIAP lembar tab, termasuk Statistik */
+            .content-section { 
+                padding-bottom: calc(180px + env(safe-area-inset-bottom)) !important; 
+            }
+            
+            .liquid-glass-3d { 
+                background: rgba(255,255,255,0.03) !important; 
+                border-color: rgba(255,255,255,0.05) !important; 
+                box-shadow: none !important; 
+                padding: 20px !important; border-radius: 20px !important; 
             }
             /* 5. UBAH BENTUK KARTU SENSOR */
             .stat-grid { display: flex !important; flex-direction: column; gap: 15px; }
