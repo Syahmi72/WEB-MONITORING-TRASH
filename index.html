@@ -405,17 +405,22 @@
 
     <script>
         window.addEventListener('load', () => {
-            // Kasih delay 1 detik (1000ms) biar logo sempat berdenyut
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('layar-loading');
-                if(loadingScreen) {
-                    loadingScreen.style.transition = "opacity 0.5s ease"; // Efek memudar
-                    loadingScreen.style.opacity = "0"; // Bikin transparan
-                    
-                    // Hapus elemen dari layar setelah setengah detik memudar
-                    setTimeout(() => loadingScreen.remove(), 500); 
-                }
-            }, 1000); 
+            if (localStorage.getItem("statusLoginITK") === "sudah_login") {
+                
+                setTimeout(() => {
+                    window.location.href = "dashboard.html"; 
+                }, 1000); 
+
+            } else {
+                setTimeout(() => {
+                    const loadingScreen = document.getElementById('layar-loading');
+                    if(loadingScreen) {
+                        loadingScreen.style.transition = "opacity 0.5s ease"; // Efek memudar
+                        loadingScreen.style.opacity = "0"; // Bikin transparan
+                        setTimeout(() => loadingScreen.remove(), 500); 
+                    }
+                }, 1000); 
+            }
         });
     </script>
 </body>
