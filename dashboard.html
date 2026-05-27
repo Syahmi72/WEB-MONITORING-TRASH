@@ -611,45 +611,66 @@
         var lineChart = new ApexCharts(document.querySelector("#lineChart"), lineOptions);
         lineChart.render();
 
-        // ======================== LOGIKA SENSOR ANIMASI (IDLE / AKTIF) ========================
+        // ======================== LOGIKA SENSOR ANIMASI (IDLE / PROSES / MASUK) ========================
         db.ref('/sistem/status_aktif').on('value', (s) => {
             const st = s.val();
             const el = document.getElementById('status-live');
-    
-            // Reset dulu semua kartu ke IDLE
+            
+            // 1. Matikan semua kartu (Reset ke mode IDLE)
             ['logam', 'plastik', 'organik'].forEach(type => {
-                document.getElementById('card-' + type).classList.remove('active-' + type);
-                document.getElementById('pill-' + type).innerText = 'IDLE';
-                document.getElementById('desc-' + type).innerText = 'Menunggu sampah masuk';
-                document.getElementById('desc-' + type).style.color = '#777';
+                let card = document.getElementById('card-' + type);
+                if(card) card.classList.remove('active-' + type);
+                
+                let pill = document.getElementById('pill-' + type);
+                if(pill) pill.innerText = 'IDLE';
+                
+                let desc = document.getElementById('desc-' + type);
+                if(desc) { desc.innerText = 'Menunggu sampah masuk'; desc.style.color = '#777'; }
+                
+                // Pastikan animasi loading kembali normal mengikuti CSS awal
+                let spin = document.getElementById('spin-' + type);
+                if(spin) spin.style.display = ''; 
             });
 
-        if(st && st !== "Menunggu Sampah...") {
-            el.innerText = st;
-            let text = st.toLowerCase();
-        
-            // Deteksi berdasarkan kata kunci yang dikirim ESP32
-            if(text.includes('logam')) { 
-                el.style.color = colorLogam; 
-                triggerCard('logam'); 
-                // Tambahan: teks deskripsi khusus
-                document.getElementById('desc-logam').innerText = 'Sampah Logam sedang diproses...';
+            // 2. Baca status dari ESP32
+            if(st && st !== "" && st !== "Menunggu Sampah...") {
+                el.innerText = st;
+                let text = st.toLowerCase();
+                
+                // Deteksi warna kartu berdasarkan jenisnya
+                let type = '';
+                if(text.includes('logam')) { el.style.color = colorLogam; type = 'logam'; }
+                else if(text.includes('plastik')) { el.style.color = colorPlastik; type = 'plastik'; }
+                else if(text.includes('organik')) { el.style.color = colorOrganik; type = 'organik'; }
+                else { el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff'; }
+
+                // Nyalakan UI PWA berdasarkan fase (Sedang Terdeteksi vs Sudah Masuk)
+                if (type !== '') {
+                    let card = document.getElementById('card-' + type);
+                    if(card) card.classList.add('active-' + type);
+                    
+                    let pill = document.getElementById('pill-' + type);
+                    let desc = document.getElementById('desc-' + type);
+                    let spin = document.getElementById('spin-' + type);
+
+                    // JIKA KATA "MASUK" DITERIMA DARI ESP32 (SESUDAH SERVO TUTUP)
+                    if (text.includes('masuk')) {
+                        if(pill) pill.innerText = 'MASUK ✅';
+                        if(desc) { desc.innerText = 'Sampah berhasil masuk!'; desc.style.color = ''; }
+                        if(spin) spin.style.display = 'none'; // Matikan loading berputar
+                    } 
+                    // JIKA KATA "TERDETEKSI" DITERIMA DARI ESP32 (SAAT SERVO MEMBUKA)
+                    else {
+                        if(pill) pill.innerText = 'TERDETEKSI';
+                        if(desc) { desc.innerText = 'Sampah sedang diproses...'; desc.style.color = ''; }
+                        if(spin) spin.style.display = 'inline-block'; // Nyalakan loading berputar
+                    }
+                }
+            } else {
+                el.innerText = 'Menunggu Sampah...';
+                el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff';
             }
-            else if(text.includes('plastik')) { 
-                el.style.color = colorPlastik; 
-                triggerCard('plastik'); 
-                document.getElementById('desc-plastik').innerText = 'Sampah Plastik sedang diproses...';
-            }
-            else if(text.includes('organik')) { 
-                el.style.color = colorOrganik; 
-                triggerCard('organik'); 
-                document.getElementById('desc-organik').innerText = 'Sampah Organik sedang diproses...';
-            }
-        } else {
-            el.innerText = 'Menunggu Sampah...';
-            el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff';
-        }
-    });
+        });
 
             // 2. Nyalakan Teks (Laptop) dan Kartu (Mobile) saat mendeteksi sampah
             if(st && st !== "" && st !== "Menunggu Sampah...") {
