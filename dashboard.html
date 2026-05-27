@@ -529,7 +529,6 @@
             if(namaTab === 'statistik') { setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100); }
         }
 
-        // ======================== SETTINGS FUNCTIONS ========================
         function gantiFotoProfil(event) {
             const file = event.target.files[0];
             if(!file) return;
@@ -583,7 +582,7 @@
 
         var donutOptions = {
             series: sensorDataRealtime,
-            chart: { type: 'donut', height: 280, background: 'transparent', dropShadow: { enabled: true, top: 2, left: 2, blur: 3, opacity: 0.1 } },
+            chart: { type: 'donut', height: 280, background: 'transparent', dropShadow: { enabled: true, top: 2, left: 2, blur: 3, opacity: 0.1 }, animations: { enabled: true, dynamicAnimation: { speed: 500 } } },
             labels: ['Logam', 'Plastik', 'Organik'],
             colors: [colorLogam, colorPlastik, colorOrganik],
             stroke: { show: true, colors: ['transparent'], width: 1 }, 
@@ -611,24 +610,36 @@
         lineChart.render();
 
         // ======================== LOGIKA SENSOR ANIMASI (IDLE / PROSES / MASUK) ========================
+        function getColor(type) {
+            if(type === 'logam') return colorLogam;
+            if(type === 'plastik') return colorPlastik;
+            if(type === 'organik') return colorOrganik;
+            return '#fff';
+        }
+
         db.ref('/sistem/status_aktif').on('value', (s) => {
             const st = s.val();
             const el = document.getElementById('status-live');
             
-            // 1. Matikan semua kartu (Reset ke mode IDLE)
+            // 1. Matikan semua kartu (HP) & lingkaran (Laptop)
             ['logam', 'plastik', 'organik'].forEach(type => {
+                // Matikan HP
                 let card = document.getElementById('card-' + type);
                 if(card) card.classList.remove('active-' + type);
-                
                 let pill = document.getElementById('pill-' + type);
                 if(pill) pill.innerText = 'IDLE';
-                
                 let desc = document.getElementById('desc-' + type);
                 if(desc) { desc.innerText = 'Menunggu sampah masuk'; desc.style.color = '#777'; }
-                
-                // Pastikan animasi loading kembali normal mengikuti CSS awal
                 let spin = document.getElementById('spin-' + type);
                 if(spin) spin.style.display = ''; 
+
+                // Matikan Laptop
+                let circle = document.getElementById('circle-' + type);
+                if(circle) {
+                    circle.style.transform = "scale(1)";
+                    circle.style.boxShadow = "var(--shadow-out)";
+                    circle.style.borderColor = "#fff";
+                }
             });
 
             // 2. Baca status dari ESP32
@@ -636,33 +647,39 @@
                 el.innerText = st;
                 let text = st.toLowerCase();
                 
-                // Deteksi warna kartu berdasarkan jenisnya
+                // Cek Tipe
                 let type = '';
                 if(text.includes('logam')) { el.style.color = colorLogam; type = 'logam'; }
                 else if(text.includes('plastik')) { el.style.color = colorPlastik; type = 'plastik'; }
                 else if(text.includes('organik')) { el.style.color = colorOrganik; type = 'organik'; }
                 else { el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff'; }
 
-                // Nyalakan UI PWA berdasarkan fase (Sedang Terdeteksi vs Sudah Masuk)
+                // Nyalakan Animasi
                 if (type !== '') {
+                    // Animasi HP
                     let card = document.getElementById('card-' + type);
                     if(card) card.classList.add('active-' + type);
-                    
                     let pill = document.getElementById('pill-' + type);
                     let desc = document.getElementById('desc-' + type);
                     let spin = document.getElementById('spin-' + type);
 
-                    // JIKA KATA "MASUK" DITERIMA DARI ESP32 (SESUDAH SERVO TUTUP)
+                    // Animasi Laptop (Membesar & Glowing!)
+                    let circle = document.getElementById('circle-' + type);
+                    if(circle) {
+                        circle.style.transform = "scale(1.15)";
+                        circle.style.boxShadow = `0 0 30px ${getColor(type)}, inset 0 0 15px ${getColor(type)}`;
+                        circle.style.borderColor = getColor(type);
+                    }
+
+                    // Teks Fase "Sedang Diproses" vs "Berhasil Masuk"
                     if (text.includes('masuk')) {
                         if(pill) pill.innerText = 'MASUK ✅';
                         if(desc) { desc.innerText = 'Sampah berhasil masuk!'; desc.style.color = ''; }
-                        if(spin) spin.style.display = 'none'; // Matikan loading berputar
-                    } 
-                    // JIKA KATA "TERDETEKSI" DITERIMA DARI ESP32 (SAAT SERVO MEMBUKA)
-                    else {
+                        if(spin) spin.style.display = 'none';
+                    } else {
                         if(pill) pill.innerText = 'TERDETEKSI';
                         if(desc) { desc.innerText = 'Sampah sedang diproses...'; desc.style.color = ''; }
-                        if(spin) spin.style.display = 'inline-block'; // Nyalakan loading berputar
+                        if(spin) spin.style.display = 'inline-block';
                     }
                 }
             } else {
@@ -670,32 +687,6 @@
                 el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff';
             }
         });
-
-            // 2. Nyalakan Teks (Laptop) dan Kartu (Mobile) saat mendeteksi sampah
-            if(st && st !== "" && st !== "Menunggu Sampah...") {
-                el.innerText = st;
-                let text = st.toLowerCase();
-                
-                if(text.includes('logam')) { el.style.color = colorLogam; triggerCard('logam'); }
-                else if(text.includes('plastik')) { el.style.color = colorPlastik; triggerCard('plastik'); }
-                else if(text.includes('organik')) { el.style.color = colorOrganik; triggerCard('organik'); }
-                else { el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff'; }
-            } else {
-                el.innerText = 'Menunggu Sampah...';
-                el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff';
-            }
-
-        // Trigger khusus menyalakan Border & Spinner di Mobile PWA
-        function triggerCard(type) {
-            let card = document.getElementById('card-' + type);
-            if(card) card.classList.add('active-' + type);
-            
-            let pill = document.getElementById('pill-' + type);
-            if(pill) pill.innerText = 'TERDETEKSI';
-            
-            let desc = document.getElementById('desc-' + type);
-            if(desc) { desc.innerText = 'Sampah sedang diproses...'; desc.style.color = ''; } // Biar ngikut warna neon di CSS
-        }
 
         // ======================== UPDATE STATISTIK LINGKARAN & GRAFIK ========================
         function updateKartuStatistik() {
@@ -717,8 +708,9 @@
             document.getElementById('stat-juara').innerText = juara;
         }
 
-        function updateUI(id, val, index, color) {
-            // Update angka di tabung Bulat (Khusus Laptop)
+        // FUNGSI INI SUDAH DIPERBAIKI (Ditambah 'colorHex' biar grafik tidak error)
+        function updateUI(id, val, index, colorHex) {
+            // 1. Update angka & cairan tabung (Khusus Laptop)
             const el = document.getElementById('val-'+id);
             if(el) el.innerText = val;
             
@@ -726,20 +718,21 @@
             if(circle) {
                 let limit = 50; 
                 let percentage = (val / limit) * 100; if(percentage > 100) percentage = 100;
-                circle.style.background = `conic-gradient(${color} ${percentage}%, rgba(255,255,255,0.4) 0%)`;
+                circle.style.background = `conic-gradient(${colorHex} ${percentage}%, rgba(255,255,255,0.4) 0%)`;
             }
             
-            // Update ApexCharts
+            // 2. Update Grafik Donut & Total Statistik (HP & Laptop)
             sensorDataRealtime[index] = val;
             donutChart.updateSeries(sensorDataRealtime);
             updateKartuStatistik();
         }
 
+        // PEMANGGILAN FIREBASE SUDAH AMAN (Ada 4 Parameter Termasuk Warna)
         db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, colorLogam));
         db.ref('/sensor_plastik/total').on('value', s => updateUI('plastik', s.val()||0, 1, colorPlastik));
         db.ref('/sensor_organik/total').on('value', s => updateUI('organik', s.val()||0, 2, colorOrganik));
 
-        // ======================== 3D MAP LOGIC (Google Satelit Hybrid) ========================
+        // ======================== 3D MAP LOGIC ========================
         let map;
         let mapMarker;
 
