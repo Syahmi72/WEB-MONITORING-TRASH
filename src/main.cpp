@@ -4,8 +4,8 @@
 #include <ESP32Servo.h> 
 
 // === KONFIGURASI WIFI ===
-#define WIFI_SSID "Sami"
-#define WIFI_PASSWORD "Kualisami29"
+#define WIFI_SSID "ITK-LAB.X"
+#define WIFI_PASSWORD "K@mpusM3rdeka!"
 
 // === KONFIGURASI FIREBASE ===
 #define FIREBASE_HOST "monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -150,9 +150,9 @@ void loop() {
         statusTerakhir = status; 
       }
       if (adaSampahBaru) {
-        Firebase.setIntAsync(fbdo, "/sensor_induktif/total", totalLogam);
-        Firebase.setIntAsync(fbdo, "/sensor_plastik/total", totalPlastik);
-        Firebase.setIntAsync(fbdo, "/sensor_organik/total", totalOrganik);
+        Firebase.setInt(fbdo, "/sensor_induktif/total", totalLogam);
+        Firebase.setInt(fbdo, "/sensor_plastik/total", totalPlastik);
+        Firebase.setInt(fbdo, "/sensor_organik/total", totalOrganik);
       }
     }
   }
