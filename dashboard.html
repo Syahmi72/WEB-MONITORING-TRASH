@@ -53,7 +53,7 @@
             --glass-border: rgba(255, 255, 255, 0.8);
             
             --color-logam: #f59e0b;
-            --color-plastik: #00ffff; /* Diubah jadi Cyan biar seragam dengan HP */
+            --color-plastik: #00ffff; 
             --color-organik: #22c55e;
             --color-primary: #059669;
             --color-danger: #e11d48;
@@ -115,8 +115,11 @@
         .hero-title { font-size: 36px; font-weight: 300; line-height: 1.2; margin-bottom: 30px; letter-spacing: -1px; color: #1f2937; }
         .hero-title strong { font-weight: 800; color: var(--color-primary); text-shadow: 0 2px 4px rgba(5, 150, 105, 0.1); }
 
-        /* ======================== PERPISAHAN DESAIN SENSOR (LAPTOP VS HP) ======================== */
-        /* 1. KHUSUS LAPTOP (BULATAN LIQUID GLASS) */
+        /* ======================== PROGRESS BAR KAPASITAS ULTRASONIK ======================== */
+        .progress-container { background-color: rgba(0,0,0,0.05); border-radius: 20px; width: 100%; height: 28px; overflow: hidden; box-shadow: var(--shadow-in); border: 1px solid rgba(255,255,255,0.6); position: relative; }
+        .progress-bar { background-color: var(--color-primary); height: 100%; width: 0%; color: #fff; font-weight: 800; text-align: center; line-height: 28px; transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-size: 13px; text-shadow: 0 1px 2px rgba(0,0,0,0.4); box-shadow: inset 0 -3px 5px rgba(0,0,0,0.2), inset 0 3px 5px rgba(255,255,255,0.4); }
+
+        /* ======================== DESAIN SENSOR (LAPTOP) ======================== */
         .desktop-sensors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         .desktop-sensors .stat-card-3d { display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.3); border-radius: 25px; padding: 25px; box-shadow: var(--shadow-in); border: 1px solid rgba(255,255,255,0.4); transition: 0.3s; }
         .desktop-sensors .stat-card-3d:hover { transform: scale(1.03); background: #fff; box-shadow: var(--shadow-out); }
@@ -127,7 +130,7 @@
         .circle-wrap-3d.plastik { background: conic-gradient(var(--color-plastik) 0%, rgba(255,255,255,0.5) 0%); }
         .circle-wrap-3d.organik { background: conic-gradient(var(--color-organik) 0%, rgba(255,255,255,0.5) 0%); }
 
-        /* 2. KHUSUS HP (KARTU NEO BRUTALISM) - Disembunyikan di Laptop */
+        /* ======================== DESAIN SENSOR HP (NEO BRUTALISM) ======================== */
         .mobile-sensors { display: none; }
         .sensor-card-modern { background: #111111; border: 2px solid #222222; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; transition: all 0.3s ease; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .sc-top { display: flex; align-items: center; gap: 15px; }
@@ -141,7 +144,6 @@
         .sc-spinner { animation: spin 1s linear infinite; display: none; font-size: 16px; font-weight: bold; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* ACTIVE STATE: LOGAM */
         .sensor-card-modern.active-logam { border-color: var(--color-logam); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), inset 0 0 10px rgba(245, 158, 11, 0.05); }
         .sensor-card-modern.active-logam .sc-icon { background: rgba(245, 158, 11, 0.15); }
         .sensor-card-modern.active-logam .sc-icon span { filter: none; }
@@ -150,7 +152,6 @@
         .sensor-card-modern.active-logam .sc-bottom span { color: var(--color-logam) !important; }
         .sensor-card-modern.active-logam .sc-spinner { display: inline-block; }
 
-        /* ACTIVE STATE: PLASTIK */
         .sensor-card-modern.active-plastik { border-color: var(--color-plastik); box-shadow: 0 0 20px rgba(0, 255, 255, 0.15), inset 0 0 10px rgba(0, 255, 255, 0.05); }
         .sensor-card-modern.active-plastik .sc-icon { background: rgba(0, 255, 255, 0.15); }
         .sensor-card-modern.active-plastik .sc-icon span { filter: none; }
@@ -159,7 +160,6 @@
         .sensor-card-modern.active-plastik .sc-bottom span { color: var(--color-plastik) !important; }
         .sensor-card-modern.active-plastik .sc-spinner { display: inline-block; }
 
-        /* ACTIVE STATE: ORGANIK */
         .sensor-card-modern.active-organik { border-color: var(--color-organik); box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), inset 0 0 10px rgba(34, 197, 94, 0.05); }
         .sensor-card-modern.active-organik .sc-icon { background: rgba(34, 197, 94, 0.15); }
         .sensor-card-modern.active-organik .sc-icon span { filter: none; }
@@ -199,7 +199,7 @@
                 --bg-body: #0a0c0a; --text-main: #ffffff;
                 --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08);
                 --shadow-out: none; --shadow-in: none; --glass-specular: none; 
-                --color-primary: #ccff00; /* Hijau Neon khas Webmu */
+                --color-primary: #ccff00; 
             }
             body { background: var(--bg-body); color: #fff; }
             #auth-guard { background: #0a0c0a; }
@@ -209,7 +209,10 @@
             
             .sidebar, .ambient-orb, .footer-3d { display: none !important; }
             
-            /* HEADER HP (FIX BATAS ATAS/JAM PAKE ENV) */
+            /* PROGRESS BAR HP */
+            .progress-container { background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+            .progress-bar { color: #111; text-shadow: none; box-shadow: none; }
+
             .mobile-topbar { 
                 display: flex !important; position: fixed; width: 100%; top: 0; left: 0;
                 background: rgba(10, 12, 10, 0.8); backdrop-filter: blur(10px);
@@ -222,31 +225,25 @@
             
             .status-dot-mobile { width: 10px; height: 10px; background: #ccff00; border-radius: 50%; box-shadow: 0 0 10px #ccff00; animation: blink 1.5s infinite; }
 
-            /* JARAK KONTEN HP AGAR BISA DI-SCROLL MELEWATI MENU BAWAH */
             .app-layout { padding: calc(80px + env(safe-area-inset-top)) 15px calc(150px + env(safe-area-inset-bottom)) 15px !important; display: block; margin: 0; }
             .liquid-glass-3d { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.05) !important; box-shadow: none !important; padding: 20px !important; border-radius: 20px !important; }
             
-            /* TAMPILAN SENSOR (Tukar dari Bulat jadi Kartu Neo-Brutalism) */
             .desktop-sensors { display: none !important; }
             .mobile-sensors { display: flex !important; flex-direction: column; gap: 15px; margin-bottom: 25px; }
 
-            /* KARTU STATISTIK HP */
             .stat-grid-2 { display: grid !important; grid-template-columns: 1fr; gap: 15px; }
             .stat-grid-2 .stat-card-3d { display: flex !important; flex-direction: column !important; padding: 20px !important; min-height: auto !important; width: 100% !important; background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.08) !important; }
 
-            /* KARTU GRAFIK HP */
             .chart-grid { display: grid !important; grid-template-columns: 1fr; gap: 15px; }
             .chart-grid .stat-card-3d { display: block !important; padding: 20px 15px 30px 15px !important; width: 100% !important; min-height: 320px !important; background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.08) !important; }
             
             #lineChart, #donutChart { width: 100% !important; min-height: 250px; }
             .hero-title { font-size: 24px !important; text-align: center; }
             
-            /* FORM SETTINGS HP */
             .form-input-3d { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1) !important; color: #fff !important; }
             .profile-pic-upload-3d { border-color: var(--color-primary) !important; background: transparent !important; }
             .btn-secondary-3d { background: rgba(255,255,255,0.1) !important; color: #fff !important; border: none !important; }
 
-            /* BOTTOM NAVIGATION BAR (FLOATING 3D GLASS) */
             .bottom-nav {
                 display: flex !important; position: fixed; 
                 bottom: calc(15px + env(safe-area-inset-bottom)); left: 5%; width: 90%; 
@@ -307,6 +304,15 @@
                     </div>
                 </div>
 
+                <div class="liquid-glass-3d" id="card-kapasitas-box" style="margin-bottom: 25px; padding: 25px; transition: 0.3s;">
+                    <h3 style="color: var(--color-primary); font-size: 16px; margin-bottom: 15px; display: flex; justify-content: space-between; font-weight: 700; text-transform: uppercase;">
+                        <span>📊 Kapasitas Tong Sampah</span>
+                        <span id="teks-peringatan" style="font-size: 12px; font-weight: 600; color: #6b7280;">Menghitung...</span>
+                    </h3>
+                    <div class="progress-container">
+                        <div id="bar-kapasitas" class="progress-bar" style="width: 0%;">0%</div>
+                    </div>
+                </div>
                 <div class="desktop-sensors">
                     <div class="stat-card-3d">
                         <div class="circle-wrap-3d logam" id="circle-logam"><div class="circle-inner-3d" id="val-logam">0</div></div>
@@ -573,7 +579,7 @@
             });
         }
 
-        // ======================== 3D CHARTS LOGIC (ApexCharts) ========================
+        // ======================== 3D CHARTS LOGIC ========================
         let sensorDataRealtime = [0, 0, 0]; 
 
         const style = getComputedStyle(document.documentElement);
@@ -611,7 +617,7 @@
         var lineChart = new ApexCharts(document.querySelector("#lineChart"), lineOptions);
         lineChart.render();
 
-        // ======================== LOGIKA SENSOR ANIMASI (IDLE / PROSES / MASUK) ========================
+        // ======================== LOGIKA SENSOR ANIMASI ========================
         function getColor(type) {
             if(type === 'logam') return colorLogam;
             if(type === 'plastik') return colorPlastik;
@@ -623,9 +629,7 @@
             const st = s.val();
             const el = document.getElementById('status-live');
             
-            // 1. Matikan semua kartu (HP) & lingkaran (Laptop)
             ['logam', 'plastik', 'organik'].forEach(type => {
-                // Matikan HP
                 let card = document.getElementById('card-' + type);
                 if(card) card.classList.remove('active-' + type);
                 let pill = document.getElementById('pill-' + type);
@@ -635,7 +639,6 @@
                 let spin = document.getElementById('spin-' + type);
                 if(spin) spin.style.display = ''; 
 
-                // Matikan Laptop
                 let circle = document.getElementById('circle-' + type);
                 if(circle) {
                     circle.style.transform = "scale(1)";
@@ -644,28 +647,24 @@
                 }
             });
 
-            // 2. Baca status dari ESP32
             if(st && st !== "" && st !== "Menunggu Sampah...") {
                 el.innerText = st;
                 let text = st.toLowerCase();
                 
-                // Cek Tipe
                 let type = '';
                 if(text.includes('logam')) { el.style.color = colorLogam; type = 'logam'; }
                 else if(text.includes('plastik')) { el.style.color = colorPlastik; type = 'plastik'; }
                 else if(text.includes('organik')) { el.style.color = colorOrganik; type = 'organik'; }
+                else if(text.includes('penuh')) { el.style.color = '#e11d48'; } // Merah saat penuh
                 else { el.style.color = window.innerWidth > 1100 ? '#111827' : '#ffffff'; }
 
-                // Nyalakan Animasi
                 if (type !== '') {
-                    // Animasi HP
                     let card = document.getElementById('card-' + type);
                     if(card) card.classList.add('active-' + type);
                     let pill = document.getElementById('pill-' + type);
                     let desc = document.getElementById('desc-' + type);
                     let spin = document.getElementById('spin-' + type);
 
-                    // Animasi Laptop (Membesar & Glowing!)
                     let circle = document.getElementById('circle-' + type);
                     if(circle) {
                         circle.style.transform = "scale(1.15)";
@@ -673,7 +672,6 @@
                         circle.style.borderColor = getColor(type);
                     }
 
-                    // Teks Fase "Sedang Diproses" vs "Berhasil Masuk"
                     if (text.includes('masuk')) {
                         if(pill) pill.innerText = 'MASUK ✅';
                         if(desc) { desc.innerText = 'Sampah berhasil masuk!'; desc.style.color = ''; }
@@ -690,7 +688,6 @@
             }
         });
 
-        // ======================== UPDATE STATISTIK LINGKARAN & GRAFIK ========================
         function updateKartuStatistik() {
             let totalLogam = sensorDataRealtime[0];
             let totalPlastik = sensorDataRealtime[1];
@@ -711,10 +708,7 @@
         }
 
         let chartUpdateTimer;
-
-        // FUNGSI INI SUDAH DIPERBAIKI (Ditambah 'colorHex' biar grafik tidak error)
         function updateUI(id, val, index, colorHex) {
-            // 1. Update angka & cairan tabung (Khusus Laptop)
             const el = document.getElementById('val-'+id);
             if(el) el.innerText = val;
             
@@ -725,22 +719,54 @@
                 circle.style.background = `conic-gradient(${colorHex} ${percentage}%, rgba(255,255,255,0.4) 0%)`;
             }
             
-            // 2. Update Grafik Donut & Total Statistik (HP & Laptop)
             sensorDataRealtime[index] = val;
             updateKartuStatistik();
         }
 
         clearTimeout(chartUpdateTimer);
-            chartUpdateTimer = setTimeout(() => {
-                if(donutChart) {
-                    donutChart.updateSeries(sensorDataRealtime);
-                }
-            }, 350);
+        chartUpdateTimer = setTimeout(() => {
+            if(donutChart) { donutChart.updateSeries(sensorDataRealtime); }
+        }, 350);
 
-        // PEMANGGILAN FIREBASE SUDAH AMAN (Ada 4 Parameter Termasuk Warna)
         db.ref('/sensor_induktif/total').on('value', s => updateUI('logam', s.val()||0, 0, colorLogam));
         db.ref('/sensor_plastik/total').on('value', s => updateUI('plastik', s.val()||0, 1, colorPlastik));
         db.ref('/sensor_organik/total').on('value', s => updateUI('organik', s.val()||0, 2, colorOrganik));
+
+        // ======================== BACA DATA KAPASITAS ULTRASONIK ========================
+        db.ref('/sistem/kapasitas').on('value', (snapshot) => {
+            let kapasitas = snapshot.val();
+            if (kapasitas === null) kapasitas = 0;
+            
+            const bar = document.getElementById('bar-kapasitas');
+            const teks = document.getElementById('teks-peringatan');
+            const box = document.getElementById('card-kapasitas-box');
+            
+            // Set Lebar (Width)
+            bar.style.width = kapasitas + '%';
+            bar.innerText = kapasitas + '%';
+            
+            // Logika Perubahan Warna Otomatis Berdasarkan Persentase
+            if (kapasitas >= 80) {
+                bar.style.backgroundColor = '#e11d48'; // Merah bahaya
+                teks.innerText = "🚨 Status: TONG PENUH!";
+                teks.style.color = '#e11d48';
+                box.style.border = "2px solid rgba(225, 29, 72, 0.4)";
+                box.style.boxShadow = "0 0 20px rgba(225, 29, 72, 0.15)";
+            } else if (kapasitas >= 50) {
+                bar.style.backgroundColor = '#f59e0b'; // Kuning warning
+                teks.innerText = "⚠️ Status: Terisi Sebagian";
+                teks.style.color = '#f59e0b';
+                box.style.border = "2px solid rgba(255, 255, 255, 0.8)";
+                box.style.boxShadow = "var(--shadow-out)";
+            } else {
+                const warnaAman = window.innerWidth > 1100 ? '#059669' : '#ccff00'; // Hijau aman
+                bar.style.backgroundColor = warnaAman;
+                teks.innerText = "✅ Status: Kosong / Aman";
+                teks.style.color = warnaAman;
+                box.style.border = "2px solid rgba(255, 255, 255, 0.8)";
+                box.style.boxShadow = "var(--shadow-out)";
+            }
+        });
 
         // ======================== 3D MAP LOGIC ========================
         let map;

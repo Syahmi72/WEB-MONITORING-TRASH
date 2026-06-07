@@ -11,21 +11,29 @@
 #define FIREBASE_HOST "monitoring-tempat-sampah-c7e1a-default-rtdb.asia-southeast1.firebasedatabase.app"
 #define FIREBASE_AUTH "kqGzNtFg7WN8ZAx5N5uqLaga6WBaSklVmjDa5Dfe"
 
-// === PIN SENSOR ===
+// === PIN SENSOR SAMPAH ===
 #define PIN_INDUKTIF 19   // Sensor Logam
 #define PIN_KAPASITIF 15  // Sensor Plastik
 #define PIN_IR 22         // Sensor Organik
 
-// === PIN SERVO ===
-#define PIN_SERVO_LOGAM 25    // Pindah dari 13 ke 25
-#define PIN_SERVO_PLASTIK 26  // Pindah dari 12 ke 26
-#define PIN_SERVO_ORGANIK 14  // Tetap di 14 (Aman)
+// === PIN SENSOR ULTRASONIK ===
+#define PIN_TRIG 5
+#define PIN_ECHO 18
 
-// =======================================================
-// ⚙️ SETTING TRIGGER SENSOR (LOGIKA DIBALIK)
-// =======================================================
-#define TRIGGER_INDUKTIF LOW    
-#define TRIGGER_KAPASITIF HIGH  // UBAH JADI HIGH KARENA SENSOR TIPE NPN-NC (NORMALLY CLOSED)
+// 📏 KALIBRASI ULTRASONIK (UBAH ANGKA INI SESUAI LEBAR FISIK TONGMU)
+// Jarak tembakan mentok ke dinding kanan saat 3 tong masih kosong
+#define JARAK_KOSONG 60  
+// Jarak tembakan saat tumpukan sampah menghalangi sensor
+#define JARAK_PENUH 15   
+
+// === PIN SERVO ===
+#define PIN_SERVO_LOGAM 25    
+#define PIN_SERVO_PLASTIK 26  
+#define PIN_SERVO_ORGANIK 14  
+
+// === SETTING TRIGGER SENSOR ===
+#define TRIGGER_INDUKTIF HIGH    
+#define TRIGGER_KAPASITIF HIGH  
 #define TRIGGER_IR LOW          
 
 // === VARIABEL GLOBAL ===
@@ -43,20 +51,28 @@ int totalOrganik = 0;   bool organikTerlihat = false;
 
 String statusTerakhir = ""; 
 unsigned long waktuDebugTerakhir = 0; 
+unsigned long waktuUltrasonikTerakhir = 0;
+
+int kapasitasPersen = 0;
+bool tongPenuh = false;
 
 void setup() {
   Serial.begin(115200);
   delay(1000); 
 
   Serial.println("\n\n=================================");
-  Serial.println("   MONITORING TEMPAT SAMPAH V8");
-  Serial.println("    (LOGIKA NPN-NC FIXED)");
+  Serial.println("   MONITORING TEMPAT SAMPAH V9");
+  Serial.println(" (FULL SYSTEM + RADAR ULTRASONIK)");
   Serial.println("=================================");
 
+  // Inisialisasi pin
   pinMode(PIN_INDUKTIF, INPUT_PULLUP);
   pinMode(PIN_KAPASITIF, INPUT_PULLUP); 
   pinMode(PIN_IR, INPUT_PULLUP);
   
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+
   pinMode(2, OUTPUT); 
   digitalWrite(2, LOW);
 
@@ -70,9 +86,9 @@ void setup() {
   servoOrganik.attach(PIN_SERVO_ORGANIK);
 
   // Posisi Awal 
-  servoLogam.write(0);    // Tipe 180 -> Tutup rapat di 0
-  servoPlastik.write(90); // TIPE 360 -> WAJIB 90 AGAR NGEREM DIAM
-  servoOrganik.write(0);  // Tipe 180 -> Tutup rapat di 0
+  servoLogam.write(0);    // Tipe 180
+  servoPlastik.write(90); // TIPE 360 -> DIAM
+  servoOrganik.write(90); // TIPE 360 -> DIAM (Sudah diupdate ke 360)
 
   Serial.println("✓ Semua pin Sensor & 3 Servo siap.");
 
@@ -90,10 +106,8 @@ void setup() {
     Serial.println(" ✓ WiFi TERHUBUNG!");
     Serial.print("IP: "); Serial.println(WiFi.localIP());
 
-    Serial.print("🔄 Menghubungkan ke Firebase...");
     config.host = FIREBASE_HOST;
     config.signer.tokens.legacy_token = FIREBASE_AUTH;
-
     fbdo.setBSSLBufferSize(1024, 1024);
     fbdo.setResponseSize(1024);
 
@@ -105,17 +119,48 @@ void setup() {
   }
   
   delay(1500); 
-  Serial.println("=================================\n");
 }
 
 void loop() {
+  // =======================================================
+  // 1. PEMBACAAN RADAR ULTRASONIK (Setiap 1 Detik agar stabil)
+  // =======================================================
+  if (millis() - waktuUltrasonikTerakhir > 1000) {
+    digitalWrite(PIN_TRIG, LOW);
+    delayMicroseconds(2);
+    digitalWrite(PIN_TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(PIN_TRIG, HIGH);
+    
+    long duration = pulseIn(PIN_ECHO, HIGH, 30000); // Batas timeout bacaan
+    int jarak = duration * 0.034 / 2;
+
+    if (jarak == 0 || jarak > JARAK_KOSONG) jarak = JARAK_KOSONG; 
+
+    // Konversi jarak menyamping menjadi Persentase Penuh
+    if (jarak <= JARAK_PENUH) {
+      kapasitasPersen = 100;
+      tongPenuh = true;
+    } else {
+      kapasitasPersen = map(jarak, JARAK_KOSONG, JARAK_PENUH, 0, 100);
+      kapasitasPersen = constrain(kapasitasPersen, 0, 100);
+      tongPenuh = false;
+    }
+
+    waktuUltrasonikTerakhir = millis();
+  }
+
+  // =======================================================
+  // 2. PEMBACAAN SENSOR PINTU MASUK
+  // =======================================================
   int bacaSensorInduktif = digitalRead(PIN_INDUKTIF);
   int bacaSensorKapasitif = digitalRead(PIN_KAPASITIF);
   int bacaSensorIR = digitalRead(PIN_IR);
 
-  // RADAR DEBUG (Muncul di Serial Monitor setiap 1 detik)
+  // RADAR DEBUG 
   if (millis() - waktuDebugTerakhir > 1000) {
-    Serial.printf("🔍 RADAR -> Induktif: %d | Kapasitif: %d | IR: %d\n", bacaSensorInduktif, bacaSensorKapasitif, bacaSensorIR);
+    Serial.printf("🔍 RADAR -> Induktif:%d | Kapasitif:%d | IR:%d | Ultra:%d%% (Penuh:%d)\n", 
+    bacaSensorInduktif, bacaSensorKapasitif, bacaSensorIR, kapasitasPersen, tongPenuh);
     waktuDebugTerakhir = millis();
   }
 
@@ -135,8 +180,12 @@ void loop() {
   if (adaOrganik && !organikTerlihat) { totalOrganik++; organikTerlihat = true; adaSampahBaru = true; } 
   else if (!adaOrganik) { organikTerlihat = false; }
 
+  // =======================================================
+  // 3. UPDATE DATA KE FIREBASE
+  // =======================================================
   String status;
-  if (adaLogam) status = "Logam Terdeteksi!";
+  if (tongPenuh) status = "Tempat Sampah Penuh!";
+  else if (adaLogam) status = "Logam Terdeteksi!";
   else if (adaPlastik) status = "Plastik Terdeteksi!";
   else if (adaOrganik) status = "Organik Terdeteksi!";
   else status = "Menunggu Sampah...";
@@ -144,9 +193,9 @@ void loop() {
   if (status != statusTerakhir || adaSampahBaru) {
     if (WiFi.status() == WL_CONNECTED && Firebase.ready()) {
       if (status != statusTerakhir) {
-        Serial.print("🚀 [UPDATE] Status: ");
-        Serial.println(status);
-        Firebase.setStringAsync(fbdo, "/sistem/status_aktif", status);
+        Serial.print("🚀 [UPDATE] Status: "); Serial.println(status);
+        Firebase.setString(fbdo, "/sistem/status_aktif", status);
+        Firebase.setInt(fbdo, "/sistem/kapasitas", kapasitasPersen); // Kirim persentase ke PWA
         statusTerakhir = status; 
       }
       if (adaSampahBaru) {
@@ -158,56 +207,76 @@ void loop() {
   }
 
   // =======================================================
-  // ⚙️ LOGIKA BUKA-TUTUP SERVO & NOTIFIKASI PWA
+  // 4. LOGIKA PENGGERAK MOTOR SERVO (MANDIRI & ANTI-MACET)
   // =======================================================
-  
-  if (adaLogam) {
-    Serial.println("⚙️ Membuka Tutup LOGAM (Tipe 180)...");
-    servoLogam.write(180);  
-    delay(3000);           
-    servoLogam.write(0);    
-    Serial.println("⚙️ Menutup Tutup LOGAM.");
+  unsigned long timeoutTunggu; 
 
-    // MENGIRIM STATUS "MASUK" KE PWA
-    Serial.println("🚀 [UPDATE] Status: Sampah Logam Masuk");
-    Firebase.setString(fbdo, "/sistem/status_aktif", "Sampah Logam Masuk");
-    delay(3000); // Tahan 3 detik agar PWA sempat menampilkan animasi "Masuk"
+  // JIKA TONG PENUH, SEMUA SERVO DIKUNCI (Tidak bisa buka)
+  if (!tongPenuh) {
 
-    while (digitalRead(PIN_INDUKTIF) == TRIGGER_INDUKTIF) { delay(100); }
-    statusTerakhir = "Sampah Logam Masuk"; // Memaksa reset agar loop berikutnya normal
-  } 
-  
-  else if (adaPlastik) {
-    Serial.println("⚙️ Membuka Tutup PLASTIK (Tipe 360)...");
-    servoPlastik.write(180); delay(800); servoPlastik.write(90);
-    delay(3000);             
-    Serial.println("⚙️ Menutup Tutup PLASTIK.");
-    servoPlastik.write(0); delay(800); servoPlastik.write(90);
+    // --- JALUR SERVO SAMPAH LOGAM (Tipe 180) ---
+    if (adaLogam) {
+      Serial.println("⚙️ Membuka Tutup LOGAM...");
+      servoLogam.write(180);  
+      delay(3000);           
+      servoLogam.write(0);    
+      Serial.println("⚙️ Menutup Tutup LOGAM.");
 
-    // MENGIRIM STATUS "MASUK" KE PWA
-    Serial.println("🚀 [UPDATE] Status: Sampah Plastik Masuk");
-    Firebase.setString(fbdo, "/sistem/status_aktif", "Sampah Plastik Masuk");
-    delay(3000);
+      if (WiFi.status() == WL_CONNECTED && Firebase.ready()) Firebase.setString(fbdo, "/sistem/status_aktif", "Sampah Logam Masuk");
+      delay(3000); 
 
-    while (digitalRead(PIN_KAPASITIF) == TRIGGER_KAPASITIF) { delay(100); }
-    statusTerakhir = "Sampah Plastik Masuk";
-  } 
-  
-  else if (adaOrganik) {
-    Serial.println("⚙️ Membuka Tutup ORGANIK (Tipe 180)...");
-    servoOrganik.write(180);
-    delay(3000);             
-    servoOrganik.write(0);
-    Serial.println("⚙️ Menutup Tutup ORGANIK.");
+      timeoutTunggu = millis();
+      while (digitalRead(PIN_INDUKTIF) == TRIGGER_INDUKTIF && millis() - timeoutTunggu < 5000) { delay(100); }
+      statusTerakhir = "Sampah Logam Masuk"; 
+    } 
+    
+    // --- JALUR SERVO SAMPAH PLASTIK (Tipe 360) ---
+    if (adaPlastik) {
+      Serial.println("⚙️ Membuka Tutup PLASTIK...");
+      servoPlastik.write(180); 
+      delay(6000); 
+      
+      servoPlastik.write(90); 
+      delay(3000);              
+      
+      Serial.println("⚙️ Menutup Tutup PLASTIK.");
+      servoPlastik.write(0);  
+      delay(5500); 
+      
+      servoPlastik.write(90); 
 
-    // MENGIRIM STATUS "MASUK" KE PWA
-    Serial.println("🚀 [UPDATE] Status: Sampah Organik Masuk");
-    Firebase.setString(fbdo, "/sistem/status_aktif", "Sampah Organik Masuk");
-    delay(3000);
+      if (WiFi.status() == WL_CONNECTED && Firebase.ready()) Firebase.setString(fbdo, "/sistem/status_aktif", "Sampah Plastik Masuk");
+      delay(3000);
 
-    while (digitalRead(PIN_IR) == TRIGGER_IR) { delay(100); }
-    statusTerakhir = "Sampah Organik Masuk";
-  }
+      timeoutTunggu = millis();
+      while (digitalRead(PIN_KAPASITIF) == TRIGGER_KAPASITIF && millis() - timeoutTunggu < 5000) { delay(100); }
+      statusTerakhir = "Sampah Plastik Masuk";
+    } 
+    
+    // --- JALUR SERVO SAMPAH ORGANIK (Tipe 360) ---
+    if (adaOrganik) {
+      Serial.println("⚙️ Membuka Tutup ORGANIK...");
+      servoOrganik.write(180); 
+      delay(6000);             
+      
+      servoOrganik.write(90);  
+      delay(3000);             
+      
+      Serial.println("⚙️ Menutup Tutup ORGANIK.");
+      servoOrganik.write(0);   
+      delay(5500);             
+      
+      servoOrganik.write(90);  
+
+      if (WiFi.status() == WL_CONNECTED && Firebase.ready()) Firebase.setString(fbdo, "/sistem/status_aktif", "Sampah Organik Masuk");
+      delay(3000);
+
+      timeoutTunggu = millis();
+      while (digitalRead(PIN_IR) == TRIGGER_IR && millis() - timeoutTunggu < 5000) { delay(100); }
+      statusTerakhir = "Sampah Organik Masuk";
+    }
+
+  } // Akhir dari Blok Kunci Tong Penuh
 
   delay(50);
 }
